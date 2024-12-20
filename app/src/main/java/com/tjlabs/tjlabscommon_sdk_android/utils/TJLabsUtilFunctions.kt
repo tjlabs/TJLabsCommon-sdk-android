@@ -16,7 +16,19 @@ object TJLabsUtilFunctions{
         return System.currentTimeMillis()
     }
 
-    fun removeLevelDirectionString(levelName : String) : String {
+    fun exponentialMovingAverage(preEMA: Float, curValue: Float, windowSize: Int): Float {
+        return preEMA * (windowSize - 1) / windowSize + curValue / windowSize //avg_data
+    }
+
+    fun degree2radian(degree: Float): Float {
+        return degree * PI.toFloat() / 180
+    }
+
+    fun radian2degree(radian: Float): Float {
+        return radian * 180 / PI.toFloat()
+    }
+
+    internal fun removeLevelDirectionString(levelName : String) : String {
         var currentLevelName = levelName
         if (currentLevelName.isNotEmpty()) {
             if (currentLevelName[currentLevelName.lastIndex].toString() == "D") {
@@ -26,26 +38,21 @@ object TJLabsUtilFunctions{
         return currentLevelName
     }
 
-    fun movingAverage(preAvgValue: Float, curValue: Float, windowSize: Int): Float {
+    internal fun movingAverage(preAvgValue: Float, curValue: Float, windowSize: Int): Float {
         val windowSizeFloat = windowSize.toFloat()
         return preAvgValue * ((windowSizeFloat - 1) / windowSizeFloat) + (curValue / windowSizeFloat)
     }
 
-    fun compensateDegree(degree : Float) : Float {
+    internal fun compensateDegree(degree : Float) : Float {
         var remainderHeading = degree % 360
         if (remainderHeading < 0)
             remainderHeading += 360
         return remainderHeading
     }
 
-    fun normalizeDegree(degree: Float): Float {
-        val normalizedAngle = degree % 360
-        return if (normalizedAngle < 0) normalizedAngle + 360 else normalizedAngle
-    }
-
-    fun weightedAverageDegree(degreeA: Float, degreeB: Float, weightA: Float, weightB: Float): Float {
-        val radianA = degree2radian(normalizeDegree(degreeA))
-        val radianB = degree2radian(normalizeDegree(degreeB))
+    internal fun weightedAverageDegree(degreeA: Float, degreeB: Float, weightA: Float, weightB: Float): Float {
+        val radianA = degree2radian(compensateDegree(degreeA))
+        val radianB = degree2radian(compensateDegree(degreeB))
 
         // Compute the weighted components
         val x = weightA * cos(radianA) + weightB * cos(radianB)
@@ -54,7 +61,7 @@ object TJLabsUtilFunctions{
         return compensateDegree(radian2degree(atan2(y, x)))
     }
 
-    fun determineClosestDirectionOrNull(directionPair: Pair<Float, Float>): String? {
+    internal fun determineClosestDirectionOrNull(directionPair: Pair<Float, Float>): String? {
         // Normalize angles to be within 0 to 360 degrees
         val normalizedAngles = Pair(
             compensateDegree(directionPair.first),
@@ -77,24 +84,12 @@ object TJLabsUtilFunctions{
     }
 
 
-    fun calDegreeDeference(degreeA: Float, degree2: Float): Float {
+    internal fun calDegreeDeference(degreeA: Float, degree2: Float): Float {
         val diff = abs(degreeA - degree2)
         return diff.coerceAtMost(360 - diff)
     }
 
-    fun exponentialMovingAverage(preEMA: Float, curValue: Float, windowSize: Int): Float {
-        return preEMA * (windowSize - 1) / windowSize + curValue / windowSize //avg_data
-    }
-
-    fun degree2radian(degree: Float): Float {
-        return degree * PI.toFloat() / 180
-    }
-
-    fun radian2degree(radian: Float): Float {
-        return radian * 180 / PI.toFloat()
-    }
-
-    fun calAttEMA(preAttEMA: Attitude, curATT: Attitude, windowSize: Int): Attitude {
+    internal fun calAttEMA(preAttEMA: Attitude, curATT: Attitude, windowSize: Int): Attitude {
         return Attitude(
             exponentialMovingAverage(preAttEMA.roll, curATT.roll, windowSize),
             exponentialMovingAverage(preAttEMA.pitch, curATT.pitch, windowSize),
@@ -102,7 +97,7 @@ object TJLabsUtilFunctions{
         )
     }
 
-    fun calSensorAxisEMA(preArrayEMA: SensorAxisValue, curArray: SensorAxisValue, windowSize: Int): SensorAxisValue {
+    internal fun calSensorAxisEMA(preArrayEMA: SensorAxisValue, curArray: SensorAxisValue, windowSize: Int): SensorAxisValue {
         return SensorAxisValue(
             exponentialMovingAverage(preArrayEMA.x, curArray.x, windowSize),
             exponentialMovingAverage(preArrayEMA.y, curArray.y, windowSize),
@@ -112,7 +107,7 @@ object TJLabsUtilFunctions{
 
     }
 
-    fun l2Normalize(originalVector: List<Float>): Float {
+    internal fun l2Normalize(originalVector: List<Float>): Float {
         val squaredVector = originalVector.map { it.pow(2) }
         return sqrt(squaredVector.sum())
     }
