@@ -1,4 +1,4 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
-class TJLabsRFDManager {
+class RFDGenerator {
 }
