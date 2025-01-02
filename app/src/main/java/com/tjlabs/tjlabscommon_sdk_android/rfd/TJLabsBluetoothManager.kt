@@ -27,11 +27,11 @@ import java.util.HashSet
  */
 class TJLabsBluetoothManager(private val context: Context) {
     // 타이머 동작 콜백 인터페이스
-    interface BLETimerListener {
+    interface ScanResultListener {
         fun onScanBLEResult(bleScanInfo: BLEScanInfo)
         fun onScanBLESetResult(bleScanInfoSet : MutableSet<BLEScanInfo>)
     }
-    var timerListener: BLETimerListener? = null
+    var scanResultListener: ScanResultListener? = null
 
     private val handler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
@@ -185,7 +185,7 @@ class TJLabsBluetoothManager(private val context: Context) {
                 if (!isRunning) return
                 bleScanInfoSet = TJLabsBluetoothFunctions.removeBLEScanInfoSetOlderThan(bleScanInfoSet,
                     SystemClock.elapsedRealtimeNanos() - bleScanInfoSetTimeLimitNanos)
-                timerListener?.onScanBLESetResult(bleScanInfoSet)
+                scanResultListener?.onScanBLESetResult(bleScanInfoSet)
                 handler.postDelayed(this, getBleScanInfoSetTimeLimitMillis())
             }
         }
@@ -201,7 +201,7 @@ class TJLabsBluetoothManager(private val context: Context) {
                         synchronized(bleScanInfoSet){
                             latestBLEScanInfo = BLEScanInfo(deviceName, result.rssi, result.timestampNanos)
                             bleScanInfoSet.add(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))
-                            timerListener?.onScanBLEResult(latestBLEScanInfo)
+                            scanResultListener?.onScanBLEResult(latestBLEScanInfo)
                         }
                     }
                 }
