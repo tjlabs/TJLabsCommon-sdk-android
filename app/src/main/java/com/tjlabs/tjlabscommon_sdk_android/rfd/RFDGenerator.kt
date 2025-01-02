@@ -1,6 +1,5 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
-import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.getCurrentTimeInMilliseconds
 
 class RFDGenerator {
