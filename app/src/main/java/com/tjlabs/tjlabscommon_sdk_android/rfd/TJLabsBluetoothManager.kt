@@ -1,9 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
@@ -14,22 +11,52 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
-import android.util.Log
 import androidx.core.app.ActivityCompat
-import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.getCurrentTimeInMilliseconds
 import java.util.Collections
 import java.util.HashSet
 
+
+/**
+ * TJLabsBluetoothManager
+ * 블루투스 스캔 결과를 콜백 인터페이스를 통해 얻을 수 있음
+ * 콜백 인터페이스는 최신 스캔 결과와 시간 내 set 을 return 함
+ *
+ */
 class TJLabsBluetoothManager(private val context: Context) {
+    // 타이머 동작 콜백 인터페이스
+    interface BLETimerListener {
+        fun onScanBLEResult(bleScanInfo: BLEScanInfo)
+        fun onScanBLESetResult(bleScanInfoSet : MutableSet<BLEScanInfo>)
+    }
+    var timerListener: BLETimerListener? = null
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var timerRunnable: Runnable? = null
+    private var isRunning = false
+
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
     private var bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
     private var scanFilters: List<ScanFilter> = emptyList()
-    private var scanSettings: ScanSettings = ScanSettings.Builder().build()
-    private var scanCallback: ScanCallback? = null
+    private val scanSettings: ScanSettings = ScanSettings.Builder()
+                            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                            .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                            .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
+                            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                            .build()
+    private var rssMinThreshold = -100
+    private var rssMaxThreshold = 0
+    private var latestBLEScanInfo = BLEScanInfo()
+    private var bleScanInfoSet : MutableSet<BLEScanInfo> = Collections.synchronizedSet(HashSet())
+    private val scanCallbackClass = ScanCallbackClass()
+    private var bleScanInfoSetTimeLimitNanos = 1000 * 1000 * 1000
 
-
+    companion object{
+        const val TJLABS_WARD_UUID = "0000feaa-0000-1000-8000-00805f9b34fb"
+    }
     /**
      * 퍼미션 검사
      */
@@ -70,158 +97,118 @@ class TJLabsBluetoothManager(private val context: Context) {
     /**
      * 스캔 필터 설정
      */
-    fun setFilters(filters: List<ScanFilter>, settings: ScanSettings) {
+    fun setScanFilters(filters: List<ScanFilter>) {
         scanFilters = filters
-        scanSettings = settings
     }
 
+    fun setRssMinThreshold(threshold : Int = -100) {
+        rssMinThreshold = threshold
+    }
 
+    fun setRssMaxThreshold(threshold : Int = 0) {
+        rssMaxThreshold = threshold
+    }
 
+    fun setBleScanInfoSetTimeLimitNanos(nanoSec : Int = 1000 * 1000 * 1000) {
+        bleScanInfoSetTimeLimitNanos = nanoSec
+    }
+    fun getBleScanInfoSetTimeLimitNanos() : Int {
+        return bleScanInfoSetTimeLimitNanos
+    }
 
-//
-//
-//    private val beaconInfoSet : MutableSet<BeaconInfo> = Collections.synchronizedSet(HashSet())
-//    private lateinit var currentScanResult : BeaconInfo
-//    private var bleScanSetting : ScanSettings? = null
-//    var beaconMap = mutableMapOf<String, BeaconInfo>() //스캔한 비콘들 닮을 리스트
-//
-//    var bleDictionary = mutableMapOf<String, MutableList<MutableList<Double>>>()
-//    var BLE_VALID_TIME : Double = 1000.0
-//
-//    var onScanTimeCheck = 0L
-//    var saveRVDDataString = ""
-//    var bluetoothReady = false
-//    var rssBias = 0
-//    var rssScaleFactor = 1f
-//
-//    var rfdIndex = 0
-//    var scanModeStr = ""
-//    var bleLastScannedTime = getCurrentTimeInMilliseconds()
-//    var bleDiscoveredTime = 0L
-//
-//    companion object {
-//        const val RFD_SCAN_LIMIT_TIME_MILLIS = 1000
-//        const val RFD_SCAN_LIMIT_TIME_NANOS = RFD_SCAN_LIMIT_TIME_MILLIS * 1000 * 1000
-//    }
-//
-//    fun checkBleScan() : Pair<Boolean, String>{
-//        bluetoothAdapter = bluetoothManager.adapter
-//        if (bluetoothAdapter != null) {
-//            val isEnable = bluetoothAdapter?.isEnabled
-//            if (isEnable == false) {
-//                return Pair(isEnable, "" + "" + " Deactivation")
-//            } else {
-//                bluetoothLeScanner = bluetoothAdapter?.bluetoothLeScanner
-//                bleScanSetting =
-//                    ScanSettings.Builder()
-//                        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-//                        .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-//                        .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
-//                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-//                        .build()
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                    if (ActivityCompat.checkSelfPermission(
-//                            application,
-//                            Manifest.permission.BLUETOOTH_SCAN
-//                        ) != PackageManager.PERMISSION_GRANTED
-//                    ) {
-//                        return Pair(false, "Please Check BLUETOOTH Permission")
-//
-//                    } else {
-//                        bluetoothReady = true
-//                        return Pair(true, "BLUETOOTH Activation VERSION >= S")
-//                    }
-//                } else {
-//                    if (ActivityCompat.checkSelfPermission(
-//                            application,
-//                            Manifest.permission.BLUETOOTH
-//                        ) != PackageManager.PERMISSION_GRANTED
-//                    ) {
-//                        return Pair(false, "Please Check BLUETOOTH Permission")
-//                    } else {
-//                        Log.d("BLUETOOTH_SCAN", "Start Bluetooth scan VERSION < S")
-//                        bluetoothReady = true
-//                        return Pair(true, "BLUETOOTH Activation VERSION < S")
-//                    }
-//                }
-//            }
-//        }else{
-//            return Pair(false, "BLUETOOTH Adapter is null")
-//        }
-//    }
-//
-//
-//    private inner class ScanCallbackClass : ScanCallback() {
-//        @SuppressLint("MissingPermission")
-//        override fun onScanResult(callbackType: Int, result: ScanResult) {
-//            result.scanRecord?.let{ scanRecord ->
-//                val bleName = scanRecord.deviceName
-//                val RSSI_MIN_VALUE = -99
-//                val RSSI_MAX_VALUE = -40
-//
-//                if ((RSSI_MIN_VALUE < result.rssi) && (result.rssi < RSSI_MAX_VALUE)) {
-//                    scanRecord.deviceName?.let{deviceName ->
-//                        synchronized(beaconInfoSet){
-//                            removeBeaconInfoSetOlderThan(beaconInfoSet, SystemClock.elapsedRealtimeNanos() - RFD_SCAN_LIMIT_TIME_NANOS)
-//
-//                            onScanTimeCheck = System.currentTimeMillis()
-//                            val rssValue = (result.rssi * rssScaleFactor)
-//                            bleLastScannedTime = getCurrentTimeInMilliseconds()
-//                            bleDiscoveredTime = getCurrentTimeInMilliseconds()
-//                            beaconInfoSet.add(BeaconInfo(deviceName, rssValue.toInt(), result.timestampNanos))
-//                            Log.d("ScanResult","${BeaconInfo(deviceName, rssValue.toInt(), result.timestampNanos)}")
-//                            val scanMode = bleScanSetting?.scanMode
-//                            scanModeStr = ""
-//
-//                            if (scanMode == 1)
-//                            {
-//                                scanModeStr = "SCAN_MODE_BALANCED"
-//                            }else if(scanMode == 2)
-//                            {
-//                                scanModeStr = "SCAN_MODE_LOW_LATENCY"
-//                            }else if(scanMode == 0)
-//                            {
-//                                scanModeStr = "SCAN_MODE_LOW_POWER"
-//                            }else if(scanMode == -1)
-//                            {
-//                                scanModeStr = "SCAN_MODE_OPPORTUNISTIC"
-//                            }
-//                        }
-//                    }
-//
-//                    val bleDataToAdd = mutableListOf(result.rssi.toDouble(), System.currentTimeMillis().toDouble())
-//                    if (bleName != null) {
-//                        if (bleDictionary.contains(bleName)) {
-//                            val value = bleDictionary[bleName]!!
-//                            value.add(bleDataToAdd)
-//                            bleDictionary[bleName] = value
-//
-//                        } else {
-//                            bleDictionary[bleName] = mutableListOf(bleDataToAdd)
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        override fun onBatchScanResults(results: List<ScanResult>) {
-//        }
-//    }
-//
-//
-//    private fun removeBeaconInfoSetOlderThan(beaconInfoSet: MutableSet<BeaconInfo>, elapsedRealtimeNano: Long) {
-//        beaconInfoSet.removeAll { it.timestampNanos < elapsedRealtimeNano }
-//    }
-//    private fun filterBeaconInfoSetNewerThan(beaconInfoSet: HashSet<BeaconInfo>, elapsedRealtimeNano: Long): HashSet<BeaconInfo> {
-//        return beaconInfoSet.filter { it.timestampNanos > elapsedRealtimeNano }.toHashSet()
-//    }
-//
-//    fun initBle() : Pair<Boolean, String>{
-//        return Pair(true, "")
-//    }
-//
-//    fun getIsBLEReady(): Pair<Boolean, String>{
-//        return checkBleScan()
-//    }
+    fun getBleScanInfoSetTimeLimitMillis() : Long {
+        return (bleScanInfoSetTimeLimitNanos / ( 1000 * 1000 )).toLong()
+    }
 
+    fun startScan() {
+        // 권한 확인
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
+                != PackageManager.PERMISSION_GRANTED) {
+                throw SecurityException("BLUETOOTH_SCAN permission is required.")
+            }
+        } else {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+                throw SecurityException("ACCESS_FINE_LOCATION permission is required.")
+            }
+        }
+
+        // BLE 활성화 상태 확인
+        if (bluetoothAdapter?.isEnabled != true) {
+            throw IllegalStateException("Bluetooth is not enabled.")
+        }
+
+        // 스캔 시작
+        bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallbackClass)
+        getBLEScanResult()
+    }
+
+    fun stopScan() {
+        // BLE 활성화 상태 확인
+        if (bluetoothAdapter?.isEnabled != true) {
+            throw IllegalStateException("Bluetooth is not enabled.")
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                throw SecurityException("BLUETOOTH_SCAN permission is required.")
+            } else {
+                bluetoothLeScanner?.stopScan(scanCallbackClass)
+            }
+        } else {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                throw SecurityException("BLUETOOTH_SCAN permission is required.")
+
+            } else {
+                bluetoothLeScanner?.stopScan(scanCallbackClass)
+
+            }
+        }
+
+        if (!isRunning) return // 실행 중이 아니면 무시
+        isRunning = false
+        timerRunnable?.let { runnable ->
+            handler.removeCallbacks(runnable)
+        }
+        timerRunnable = null
+    }
+
+    private fun getBLEScanResult() {
+        isRunning = true
+        val runnable = object : Runnable {
+            override fun run() {
+                if (!isRunning) return
+                bleScanInfoSet = TJLabsBluetoothFunctions.removeBLEScanInfoSetOlderThan(bleScanInfoSet,
+                    SystemClock.elapsedRealtimeNanos() - bleScanInfoSetTimeLimitNanos)
+                timerListener?.onScanBLESetResult(bleScanInfoSet)
+                handler.postDelayed(this, getBleScanInfoSetTimeLimitMillis())
+            }
+        }
+        timerRunnable = runnable
+        handler.postDelayed(runnable, getBleScanInfoSetTimeLimitMillis())
+    }
+
+    inner class ScanCallbackClass : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            result.scanRecord?.let{ scanRecord ->
+                if ((rssMinThreshold < result.rssi) && (result.rssi < rssMaxThreshold)) {
+                    scanRecord.deviceName?.let{deviceName ->
+                        synchronized(bleScanInfoSet){
+                            latestBLEScanInfo = BLEScanInfo(deviceName, result.rssi, result.timestampNanos)
+                            bleScanInfoSet.add(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))
+                            timerListener?.onScanBLEResult(latestBLEScanInfo)
+                        }
+                    }
+                }
+            }
+        }
+
+        override fun onBatchScanResults(results: List<ScanResult>) {
+        }
+    }
 }

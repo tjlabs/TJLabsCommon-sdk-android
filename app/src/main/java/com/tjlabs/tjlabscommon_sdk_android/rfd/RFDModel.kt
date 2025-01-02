@@ -13,3 +13,17 @@ data class BLEScanInfo(
     val rssi: Int = -100,
     val timestampNanos: Long = 0L,
 )
+
+
+data class RSSIClass(
+    val count: Int,
+    val total: Int
+) {
+    fun getAverage(): Int {
+        return total / count
+    }
+
+    fun getCountString(): String {
+        return "$count"
+    }
+}
