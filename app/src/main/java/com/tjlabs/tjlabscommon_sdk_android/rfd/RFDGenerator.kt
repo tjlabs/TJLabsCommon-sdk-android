@@ -79,7 +79,7 @@ class RFDGenerator(application: Application, val userId : String = "") {
     }
 
 
-    fun stopRFDGeneration() {
+    fun stopRfdGeneration() {
         timerRunnable?.let {
             handler.removeCallbacks(it)
             timerRunnable = null
