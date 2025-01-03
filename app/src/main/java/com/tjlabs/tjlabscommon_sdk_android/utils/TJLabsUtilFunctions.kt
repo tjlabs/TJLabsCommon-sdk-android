@@ -12,6 +12,14 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 object TJLabsUtilFunctions{
+    fun millis2nanos(millis : Long) : Long {
+        return millis * 1000 * 1000
+    }
+
+    fun nanos2millis(nanos : Long) : Long {
+        return nanos / (1000 * 1000)
+    }
+
     fun getCurrentTimeInMilliseconds() : Long{
         return System.currentTimeMillis()
     }
