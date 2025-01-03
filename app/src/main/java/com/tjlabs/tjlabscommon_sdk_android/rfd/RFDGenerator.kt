@@ -36,7 +36,7 @@ class RFDGenerator(application: Application, val userId : String = "") {
         tjLabsBluetoothManager.setScanFilters(scanFilters)
     }
 
-    fun generateRFD(
+    fun generateRfd(
         rfdIntervalMillis : Long = 500,
         bleScanWindowTimeMillis : Long = 1000,
         minRssiThreshold : Int = -100,
