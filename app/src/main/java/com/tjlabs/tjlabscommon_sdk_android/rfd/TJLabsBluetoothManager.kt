@@ -26,14 +26,11 @@ import java.util.HashSet
  * 콜백 인터페이스는 최신 스캔 결과와 시간 내 set 을 return 함
  *
  */
-class TJLabsBluetoothManager(private val context: Context) {
+internal class TJLabsBluetoothManager(private val context: Context) {
     // 타이머 동작 콜백 인터페이스
     interface ScanResultListener {
-        fun onScanBLEResult(bleScanInfo: BLEScanInfo)
         fun onScanBLESetResultOrNull(bleScanInfoSet : MutableSet<BLEScanInfo>)
     }
-    var scanResultListener: ScanResultListener? = null
-
     private val handler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
     private var isRunning = false
@@ -133,7 +130,6 @@ class TJLabsBluetoothManager(private val context: Context) {
 
         // 스캔 시작
         bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallbackClass)
-        getBLEScanResult()
         return Pair(true, "Success Start Scan")
     }
 
@@ -173,14 +169,14 @@ class TJLabsBluetoothManager(private val context: Context) {
         return Pair(true, "Success Stop Scan")
     }
 
-    private fun getBLEScanResult() {
+    fun getBLEScanResult(callback : ScanResultListener) {
         isRunning = true
         val runnable = object : Runnable {
             override fun run() {
                 if (!isRunning) return
                 bleScanInfoSet = TJLabsBluetoothFunctions.removeBLEScanInfoSetOlderThan(bleScanInfoSet,
                     SystemClock.elapsedRealtimeNanos() - bleScanInfoSetTimeLimitNanos)
-                scanResultListener?.onScanBLESetResultOrNull(bleScanInfoSet)
+                callback.onScanBLESetResultOrNull(bleScanInfoSet)
                 handler.postDelayed(this, TJLabsUtilFunctions.nanos2millis(bleScanInfoSetTimeLimitNanos))
             }
         }
@@ -195,7 +191,6 @@ class TJLabsBluetoothManager(private val context: Context) {
                     scanRecord.deviceName?.let{deviceName ->
                         synchronized(bleScanInfoSet){
                             bleScanInfoSet.add(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))
-                            scanResultListener?.onScanBLEResult(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))
                         }
                     }
                 }

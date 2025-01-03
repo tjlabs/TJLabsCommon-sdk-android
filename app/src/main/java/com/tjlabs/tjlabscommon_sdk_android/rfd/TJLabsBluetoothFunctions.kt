@@ -2,14 +2,14 @@ package com.tjlabs.tjlabscommon_sdk_android.rfd
 
 import android.util.Log
 
-object TJLabsBluetoothFunctions {
-    internal fun removeBLEScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
+internal object TJLabsBluetoothFunctions {
+     fun removeBLEScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
         val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
         bleScanInfoSetCopy.removeAll { it.timestampNanos < elapsedRealtimeNano }
         return bleScanInfoSetCopy
     }
 
-    internal fun averageBLEScanInfoSet(bleScanInfoSet: MutableSet<BLEScanInfo>) : Map<String, Float> {
+    fun averageBLEScanInfoSet(bleScanInfoSet: MutableSet<BLEScanInfo>) : Map<String, Float> {
         var averageMap = mapOf<String,Float>()
         try {
             val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
@@ -29,16 +29,4 @@ object TJLabsBluetoothFunctions {
 
         return averageMap
     }
-
-    internal fun checkBLEChannelNum(bleMap: Map<String, Float>?, threshold : Float = -95f): Int {
-        var numChannels = 0
-        bleMap?.forEach { (key, value) ->
-            val bleRssi = value ?: -100.0f
-            if (bleRssi > threshold) {
-                numChannels++
-            }
-        }
-        return numChannels
-    }
-
 }
