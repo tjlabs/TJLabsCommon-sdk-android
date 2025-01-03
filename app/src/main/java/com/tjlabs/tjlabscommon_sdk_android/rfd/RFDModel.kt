@@ -26,3 +26,7 @@ internal data class RSSIClass(
         return "$count"
     }
 }
+
+enum class ScanMode{
+    NO_FILTER_SCAN, ONLY_WARD_SCAN, ONLY_SEI_SCAN, WARD_SEI_SCAN
+}

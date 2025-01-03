@@ -11,26 +11,22 @@ class RFDGenerator(application: Application, val userID : String = "") {
         fun onRFDResult(success : Boolean, msg : String, rfd: ReceivedForce)
     }
 
-    enum class MODE{
-        NO_FILTER_SCAN, ONLY_WARD_SCAN, ONLY_SEI_SCAN, WARD_SEI_SCAN
-    }
-
     private val handler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
     private var tjLabsBluetoothManager: TJLabsBluetoothManager = TJLabsBluetoothManager(application)
     private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
     private var isGenerateRFD = false
 
-    fun setMode(mode: MODE) {
-        val scanFilters = when (mode) {
-            MODE.NO_FILTER_SCAN -> listOf()
-            MODE.ONLY_WARD_SCAN -> listOf(
+    fun setScanMode(scanMode: ScanMode) {
+        val scanFilters = when (scanMode) {
+            ScanMode.NO_FILTER_SCAN -> listOf()
+            ScanMode.ONLY_WARD_SCAN -> listOf(
                 ScanFilter.Builder()
                     .setServiceUuid(ParcelUuid.fromString(TJLabsBluetoothManager.TJLABS_WARD_UUID))
                     .build()
             )
-            MODE.ONLY_SEI_SCAN -> listOf()
-            MODE.WARD_SEI_SCAN -> listOf()
+            ScanMode.ONLY_SEI_SCAN -> listOf()
+            ScanMode.WARD_SEI_SCAN -> listOf()
             else -> listOf()
         }
         tjLabsBluetoothManager.setScanFilters(scanFilters)
