@@ -47,17 +47,16 @@ class MainActivity : AppCompatActivity() {
 
 
         rfdGenerator = RFDGenerator(application, "temp")
-        rfdGenerator.setMode(RFDGenerator.MODE.ONLY_WARD_SCAN)
         btnStart.setOnClickListener {
-            rfdGenerator.generateRFD(1000, 1000, -100, -40, 0f, object : RFDGenerator.RFDCallback{
-                override fun onRFDResult(success : Boolean, msg : String, rfd: ReceivedForce) {
+            rfdGenerator.generateRFD(1000, 1000, -100, -40, getPressure = {0f}, object : RFDGenerator.RFDCallback{
+                override fun onRfdResult(success : Boolean, msg : String, rfd: ReceivedForce) {
                     Log.d("BLETimerListener", "success : $success // msg : $msg // rfd : $rfd")
                 }
             })
         }
 
         btnStop.setOnClickListener {
-            rfdGenerator.stopRFDGeneration()
+            rfdGenerator.stopRfdGeneration()
         }
 
 
