@@ -11,10 +11,11 @@ android {
 
     defaultConfig {
         applicationId = "com.tjlabs.tjlabscommon_sdk_android"
-        minSdk = 29
-        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        minSdk = 29
+        targetSdk = 34
+
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
