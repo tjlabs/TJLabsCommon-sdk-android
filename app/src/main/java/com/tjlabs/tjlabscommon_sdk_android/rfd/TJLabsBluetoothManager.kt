@@ -29,7 +29,7 @@ import java.util.HashSet
 internal class TJLabsBluetoothManager(private val context: Context) {
     // 타이머 동작 콜백 인터페이스
     interface ScanResultListener {
-        fun onScanBLESetResultOrNull(bleScanInfoSet : MutableSet<BLEScanInfo>)
+        fun onScanBleSetResultOrNull(bleScanInfoSet : MutableSet<BLEScanInfo>)
     }
     private val handler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
@@ -45,8 +45,8 @@ internal class TJLabsBluetoothManager(private val context: Context) {
                             .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
                             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                             .build()
-    private var rssMinThreshold = -100
-    private var rssMaxThreshold = 0
+    private var minRssiThreshold = -100
+    private var maxRssiThreshold = 0
     private var bleScanInfoSet : MutableSet<BLEScanInfo> = Collections.synchronizedSet(HashSet())
     private val scanCallbackClass = ScanCallbackClass()
     private var bleScanInfoSetTimeLimitNanos : Long = 1000 * 1000 * 1000
@@ -97,12 +97,12 @@ internal class TJLabsBluetoothManager(private val context: Context) {
         scanFilters = filters
     }
 
-    fun setRssMinThreshold(threshold : Int = -100) {
-        rssMinThreshold = threshold
+    fun setMinRssiThreshold(threshold : Int = -100) {
+        minRssiThreshold = threshold
     }
 
-    fun setRssMaxThreshold(threshold : Int = 0) {
-        rssMaxThreshold = threshold
+    fun setMaxRssiThreshold(threshold : Int = 0) {
+        maxRssiThreshold = threshold
     }
 
     fun setBleScanInfoSetTimeLimitNanos(nanoSec : Long = 1000 * 1000 * 1000) {
@@ -169,14 +169,14 @@ internal class TJLabsBluetoothManager(private val context: Context) {
         return Pair(true, "Success Stop Scan")
     }
 
-    fun getBLEScanResult(callback : ScanResultListener) {
+    fun getBleScanResult(callback : ScanResultListener) {
         isRunning = true
         val runnable = object : Runnable {
             override fun run() {
                 if (!isRunning) return
-                bleScanInfoSet = TJLabsBluetoothFunctions.removeBLEScanInfoSetOlderThan(bleScanInfoSet,
+                bleScanInfoSet = TJLabsBluetoothFunctions.removeBleScanInfoSetOlderThan(bleScanInfoSet,
                     SystemClock.elapsedRealtimeNanos() - bleScanInfoSetTimeLimitNanos)
-                callback.onScanBLESetResultOrNull(bleScanInfoSet)
+                callback.onScanBleSetResultOrNull(bleScanInfoSet)
                 handler.postDelayed(this, TJLabsUtilFunctions.nanos2millis(bleScanInfoSetTimeLimitNanos))
             }
         }
@@ -187,7 +187,7 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     inner class ScanCallbackClass : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             result.scanRecord?.let{ scanRecord ->
-                if ((rssMinThreshold < result.rssi) && (result.rssi < rssMaxThreshold)) {
+                if ((minRssiThreshold < result.rssi) && (result.rssi < maxRssiThreshold)) {
                     scanRecord.deviceName?.let{deviceName ->
                         synchronized(bleScanInfoSet){
                             bleScanInfoSet.add(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))

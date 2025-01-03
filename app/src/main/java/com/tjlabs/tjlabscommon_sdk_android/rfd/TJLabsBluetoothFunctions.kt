@@ -3,7 +3,7 @@ package com.tjlabs.tjlabscommon_sdk_android.rfd
 import android.util.Log
 
 internal object TJLabsBluetoothFunctions {
-     fun removeBLEScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
+     fun removeBleScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
         val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
         bleScanInfoSetCopy.removeAll { it.timestampNanos < elapsedRealtimeNano }
         return bleScanInfoSetCopy
