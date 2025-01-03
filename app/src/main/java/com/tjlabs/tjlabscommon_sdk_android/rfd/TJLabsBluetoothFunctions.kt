@@ -9,15 +9,15 @@ internal object TJLabsBluetoothFunctions {
         return bleScanInfoSetCopy
     }
 
-    fun averageBLEScanInfoSet(bleScanInfoSet: MutableSet<BLEScanInfo>) : Map<String, Float> {
+    fun averageBleScanInfoSet(bleScanInfoSet: MutableSet<BLEScanInfo>) : Map<String, Float> {
         var averageMap = mapOf<String,Float>()
         try {
             val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
-            val beaconInfoGroupedByID = bleScanInfoSetCopy.groupBy { it.id }
-            val rssiClassMap = beaconInfoGroupedByID.map {
+            val beaconInfoGroupedById = bleScanInfoSetCopy.groupBy { it.id }
+            val rssiClassMap = beaconInfoGroupedById.map {
                 it.key to RSSIClass(
                     count = it.value.count(),
-                    total = it.value.sumOf { beaconInfoListOfID -> beaconInfoListOfID.rssi }
+                    total = it.value.sumOf { beaconInfoListOfId -> beaconInfoListOfId.rssi }
                 )
             }.toMap()
             val log = "_"
