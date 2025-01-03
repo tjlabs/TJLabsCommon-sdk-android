@@ -1,21 +1,17 @@
 package com.tjlabs.tjlabscommon_sdk_android
 
 import android.Manifest
-import android.bluetooth.le.ScanFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.ParcelUuid
 import android.util.Log
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.tjlabs.tjlabscommon_sdk_android.rfd.BLEScanInfo
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
-import com.tjlabs.tjlabscommon_sdk_android.rfd.TJLabsBluetoothManager
 
 class MainActivity : AppCompatActivity() {
     private lateinit var rfdGenerator : RFDGenerator
@@ -61,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnStop.setOnClickListener {
-            rfdGenerator.stop()
+            rfdGenerator.stopRFDGeneration()
         }
 
 
