@@ -11,13 +11,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.tjlabs.tjlabscommon_sdk_android.rfd.BLEScanInfo
+import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
+import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.rfd.TJLabsBluetoothManager
 
 class MainActivity : AppCompatActivity() {
-    lateinit var tjLabsBluetoothManager: TJLabsBluetoothManager
+    private lateinit var tjLabsBluetoothManager: TJLabsBluetoothManager
+    private val rfdGenerator = RFDGenerator()
     private val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
@@ -37,45 +38,37 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-    private val multiplePermissionsCode = 100
 
+    private val multiplePermissionsCode = 100
+    private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         checkPermissions()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
         tjLabsBluetoothManager = TJLabsBluetoothManager(application)
         tjLabsBluetoothManager.checkPermissionsAndBleState()
-        tjLabsBluetoothManager.setScanFilters(
-            listOf(
-                ScanFilter.Builder()
-                    .setServiceUuid(ParcelUuid.fromString(TJLabsBluetoothManager.TJLABS_WARD_UUID))
-                    .build()
-            )
-        )
-        tjLabsBluetoothManager.setRssMaxThreshold(-60)
-        tjLabsBluetoothManager.setRssMinThreshold(-80)
-
-        tjLabsBluetoothManager.scanResultListener =
-            object : TJLabsBluetoothManager.BleScanResultListener {
-                override fun onScanBLEResult(deviceName: String?, rssi: Int, timestampNanos: Long) {
-                    Log.d("BLEScanResult", "device Name : $deviceName // rssi : $rssi")
-                }
-
-                override fun onScanBLESetResult(bleScanInfoSet: MutableSet<BLEScanInfo>) {
-                    Log.d("BLEScanSetResult", "bleScanInfoSet: $bleScanInfoSet")
-
-                }
-            }
+        tjLabsBluetoothManager.setScanFilters(listOf(
+            ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(TJLabsBluetoothManager.TJLABS_WARD_UUID)).build()))
 
         tjLabsBluetoothManager.startScan()
+        tjLabsBluetoothManager.scanResultListener = object : TJLabsBluetoothManager.ScanResultListener {
+            override fun onScanBLEResult(bleScanInfo: BLEScanInfo) {
+            }
 
+            override fun onScanBLESetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
+                this@MainActivity.bleScanInfoSet = bleScanInfoSet
+
+            }
+
+        }
+
+        rfdGenerator.generateRFD(3, 500, "temp", getBleScanInfoSet = { bleScanInfoSet }, 0f, callback = object : RFDGenerator.RFDCallback{
+            override fun onRFDResult(rfdList: List<ReceivedForce>) {
+                Log.d("BLETimerListener", "receivedForces : $rfdList")
+            }
+        })
 
     }
 
