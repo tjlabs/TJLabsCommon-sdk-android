@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.ParcelUuid
 import android.util.Log
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -17,8 +18,7 @@ import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.rfd.TJLabsBluetoothManager
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var tjLabsBluetoothManager: TJLabsBluetoothManager
-    private val rfdGenerator = RFDGenerator()
+    private lateinit var rfdGenerator : RFDGenerator
     private val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
@@ -40,35 +40,30 @@ class MainActivity : AppCompatActivity() {
 
 
     private val multiplePermissionsCode = 100
-    private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         checkPermissions()
         setContentView(R.layout.activity_main)
 
-        tjLabsBluetoothManager = TJLabsBluetoothManager(application)
-        tjLabsBluetoothManager.checkPermissionsAndBleState()
-        tjLabsBluetoothManager.setScanFilters(listOf(
-            ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(TJLabsBluetoothManager.TJLABS_WARD_UUID)).build()))
+        val btnStart = findViewById<Button>(R.id.btnStart)
+        val btnStop = findViewById<Button>(R.id.btnStop)
 
-        tjLabsBluetoothManager.startScan()
-        tjLabsBluetoothManager.scanResultListener = object : TJLabsBluetoothManager.ScanResultListener {
-            override fun onScanBLEResult(bleScanInfo: BLEScanInfo) {
-            }
 
-            override fun onScanBLESetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
-                this@MainActivity.bleScanInfoSet = bleScanInfoSet
-
-            }
-
+        rfdGenerator = RFDGenerator(application, "temp")
+        rfdGenerator.setMode(RFDGenerator.MODE.ONLY_WARD_SCAN)
+        btnStart.setOnClickListener {
+            rfdGenerator.generateRFD(1000, 1000, -100, -40, 0f, object : RFDGenerator.RFDCallback{
+                override fun onRFDResult(success : Boolean, msg : String, rfd: ReceivedForce) {
+                    Log.d("BLETimerListener", "success : $success // msg : $msg // rfd : $rfd")
+                }
+            })
         }
 
-        rfdGenerator.generateRFD(3, 500, "temp", getBleScanInfoSet = { bleScanInfoSet }, 0f, callback = object : RFDGenerator.RFDCallback{
-            override fun onRFDResult(rfdList: List<ReceivedForce>) {
-                Log.d("BLETimerListener", "receivedForces : $rfdList")
-            }
-        })
+        btnStop.setOnClickListener {
+            rfdGenerator.stop()
+        }
+
 
     }
 
