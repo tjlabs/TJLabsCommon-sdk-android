@@ -17,6 +17,10 @@ class RFDGenerator(application: Application, val userID : String = "") {
     private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
     private var isGenerateRFD = false
 
+    init {
+        setScanMode(ScanMode.ONLY_WARD_SCAN)
+    }
+
     fun setScanMode(scanMode: ScanMode) {
         val scanFilters = when (scanMode) {
             ScanMode.NO_FILTER_SCAN -> listOf()
