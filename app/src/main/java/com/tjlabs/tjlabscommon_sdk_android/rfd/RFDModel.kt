@@ -1,6 +1,5 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
-// ---------------- REC DATA ---------------- //
 data class ReceivedForce(
     val user_id: String = "",
     val mobile_time: Long = 0L,
