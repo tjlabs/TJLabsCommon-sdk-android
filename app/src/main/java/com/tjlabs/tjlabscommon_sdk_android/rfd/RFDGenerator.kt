@@ -36,13 +36,12 @@ class RFDGenerator(application: Application, val userID : String = "") {
         tjLabsBluetoothManager.setScanFilters(scanFilters)
     }
 
-
     fun generateRFD(
         rfdIntervalMillis : Long = 500,
         bleTrimIntervalMillis : Long = 1000,
         minBleThreshold : Int = -100,
         maxBleThreshold : Int = -40,
-        pressure: Float = 0f,
+        getPressure: () -> Float = {0f},
         callback: RFDCallback
     ) {
         timerRunnable = object : Runnable {
@@ -67,7 +66,7 @@ class RFDGenerator(application: Application, val userID : String = "") {
                 } else {
                     val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                     val averageBleMap = TJLabsBluetoothFunctions.averageBLEScanInfoSet(currentBleScanInfoSet)
-                    callback.onRFDResult(isGenerateRFD, "", ReceivedForce(userID, System.currentTimeMillis(), averageBleMap, pressure)) // 결과 리턴
+                    callback.onRFDResult(isGenerateRFD, "", ReceivedForce(userID, System.currentTimeMillis(), averageBleMap, getPressure())) // 결과 리턴
                 }
 
                 // 성공했을 때만 주기적으로 콜백
