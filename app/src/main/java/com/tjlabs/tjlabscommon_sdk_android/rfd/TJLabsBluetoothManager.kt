@@ -15,6 +15,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import androidx.core.app.ActivityCompat
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Collections
 import java.util.HashSet
 
@@ -29,7 +30,7 @@ class TJLabsBluetoothManager(private val context: Context) {
     // 타이머 동작 콜백 인터페이스
     interface ScanResultListener {
         fun onScanBLEResult(bleScanInfo: BLEScanInfo)
-        fun onScanBLESetResult(bleScanInfoSet : MutableSet<BLEScanInfo>)
+        fun onScanBLESetResultOrNull(bleScanInfoSet : MutableSet<BLEScanInfo>)
     }
     var scanResultListener: ScanResultListener? = null
 
@@ -49,10 +50,9 @@ class TJLabsBluetoothManager(private val context: Context) {
                             .build()
     private var rssMinThreshold = -100
     private var rssMaxThreshold = 0
-    private var latestBLEScanInfo = BLEScanInfo()
     private var bleScanInfoSet : MutableSet<BLEScanInfo> = Collections.synchronizedSet(HashSet())
     private val scanCallbackClass = ScanCallbackClass()
-    private var bleScanInfoSetTimeLimitNanos = 1000 * 1000 * 1000
+    private var bleScanInfoSetTimeLimitNanos : Long = 1000 * 1000 * 1000
 
     companion object{
         const val TJLABS_WARD_UUID = "0000feaa-0000-1000-8000-00805f9b34fb"
@@ -60,7 +60,7 @@ class TJLabsBluetoothManager(private val context: Context) {
     /**
      * 퍼미션 검사
      */
-    fun checkPermissionsAndBleState(): Boolean {
+    fun checkPermissionsAndBleState(): Pair<Boolean, String> {
         // 권한 확인
         val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
@@ -81,17 +81,16 @@ class TJLabsBluetoothManager(private val context: Context) {
         }
 
         if (!hasPermissions) {
-            println("Required permissions are not granted.")
-            return false
+            return Pair(false, "Required permissions are not granted.")
         }
 
         // BLE 활성화 상태 확인
         if (bluetoothAdapter?.isEnabled != true) {
-            println("Bluetooth is not enabled.")
-            return false
+            println()
+            return Pair(false, "Bluetooth is not enabled.")
         }
 
-        return true
+        return Pair(true, "Success Check Permission & State")
     }
 
     /**
@@ -109,52 +108,46 @@ class TJLabsBluetoothManager(private val context: Context) {
         rssMaxThreshold = threshold
     }
 
-    fun setBleScanInfoSetTimeLimitNanos(nanoSec : Int = 1000 * 1000 * 1000) {
+    fun setBleScanInfoSetTimeLimitNanos(nanoSec : Long = 1000 * 1000 * 1000) {
         bleScanInfoSetTimeLimitNanos = nanoSec
     }
-    fun getBleScanInfoSetTimeLimitNanos() : Int {
-        return bleScanInfoSetTimeLimitNanos
-    }
 
-    fun getBleScanInfoSetTimeLimitMillis() : Long {
-        return (bleScanInfoSetTimeLimitNanos / ( 1000 * 1000 )).toLong()
-    }
-
-    fun startScan() {
+    fun startScan() : Pair<Boolean, String> {
         // 권한 확인
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
                 != PackageManager.PERMISSION_GRANTED) {
-                throw SecurityException("BLUETOOTH_SCAN permission is required.")
+                return Pair(false, "BLUETOOTH_SCAN permission is required.")
             }
         } else {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-                throw SecurityException("ACCESS_FINE_LOCATION permission is required.")
+                return Pair(false, "ACCESS_FINE_LOCATION permission is required.")
             }
         }
 
         // BLE 활성화 상태 확인
         if (bluetoothAdapter?.isEnabled != true) {
-            throw IllegalStateException("Bluetooth is not enabled.")
+            return Pair(false, "Bluetooth is not enabled.")
         }
 
         // 스캔 시작
         bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallbackClass)
         getBLEScanResult()
+        return Pair(true, "Success Start Scan")
     }
 
-    fun stopScan() {
+    fun stopScan() : Pair<Boolean, String> {
         // BLE 활성화 상태 확인
         if (bluetoothAdapter?.isEnabled != true) {
-            throw IllegalStateException("Bluetooth is not enabled.")
+            return Pair(false, "Bluetooth is not enabled.")
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
                 != PackageManager.PERMISSION_GRANTED
             ) {
-                throw SecurityException("BLUETOOTH_SCAN permission is required.")
+                return Pair(false, "BLUETOOTH_SCAN permission is required.")
             } else {
                 bluetoothLeScanner?.stopScan(scanCallbackClass)
             }
@@ -162,7 +155,7 @@ class TJLabsBluetoothManager(private val context: Context) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH)
                 != PackageManager.PERMISSION_GRANTED
             ) {
-                throw SecurityException("BLUETOOTH_SCAN permission is required.")
+                return Pair(false, "BLUETOOTH_SCAN permission is required.")
 
             } else {
                 bluetoothLeScanner?.stopScan(scanCallbackClass)
@@ -170,12 +163,14 @@ class TJLabsBluetoothManager(private val context: Context) {
             }
         }
 
-        if (!isRunning) return // 실행 중이 아니면 무시
+        if (!isRunning)  return Pair(false, "Bluetooth is not enabled.")
+        // 실행 중이 아니면 무시
         isRunning = false
         timerRunnable?.let { runnable ->
             handler.removeCallbacks(runnable)
         }
         timerRunnable = null
+        return Pair(true, "Success Stop Scan")
     }
 
     private fun getBLEScanResult() {
@@ -185,12 +180,12 @@ class TJLabsBluetoothManager(private val context: Context) {
                 if (!isRunning) return
                 bleScanInfoSet = TJLabsBluetoothFunctions.removeBLEScanInfoSetOlderThan(bleScanInfoSet,
                     SystemClock.elapsedRealtimeNanos() - bleScanInfoSetTimeLimitNanos)
-                scanResultListener?.onScanBLESetResult(bleScanInfoSet)
-                handler.postDelayed(this, getBleScanInfoSetTimeLimitMillis())
+                scanResultListener?.onScanBLESetResultOrNull(bleScanInfoSet)
+                handler.postDelayed(this, TJLabsUtilFunctions.nanos2millis(bleScanInfoSetTimeLimitNanos))
             }
         }
         timerRunnable = runnable
-        handler.postDelayed(runnable, getBleScanInfoSetTimeLimitMillis())
+        handler.postDelayed(runnable, TJLabsUtilFunctions.nanos2millis(bleScanInfoSetTimeLimitNanos))
     }
 
     inner class ScanCallbackClass : ScanCallback() {
@@ -199,9 +194,8 @@ class TJLabsBluetoothManager(private val context: Context) {
                 if ((rssMinThreshold < result.rssi) && (result.rssi < rssMaxThreshold)) {
                     scanRecord.deviceName?.let{deviceName ->
                         synchronized(bleScanInfoSet){
-                            latestBLEScanInfo = BLEScanInfo(deviceName, result.rssi, result.timestampNanos)
                             bleScanInfoSet.add(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))
-                            scanResultListener?.onScanBLEResult(latestBLEScanInfo)
+                            scanResultListener?.onScanBLEResult(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))
                         }
                     }
                 }
