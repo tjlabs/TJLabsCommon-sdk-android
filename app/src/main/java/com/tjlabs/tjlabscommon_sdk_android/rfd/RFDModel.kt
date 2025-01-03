@@ -7,14 +7,14 @@ data class ReceivedForce(
     val pressure: Float = 0f
 )
 
-data class BLEScanInfo(
+internal data class BLEScanInfo(
     val id: String = "",
     val rssi: Int = -100,
     val timestampNanos: Long = 0L,
 )
 
 
-data class RSSIClass(
+internal data class RSSIClass(
     val count: Int,
     val total: Int
 ) {
