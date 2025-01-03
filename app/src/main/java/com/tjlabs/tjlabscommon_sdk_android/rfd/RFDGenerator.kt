@@ -38,9 +38,9 @@ class RFDGenerator(application: Application, val userID : String = "") {
 
     fun generateRFD(
         rfdIntervalMillis : Long = 500,
-        bleTrimIntervalMillis : Long = 1000,
-        minBleThreshold : Int = -100,
-        maxBleThreshold : Int = -40,
+        bleScanWindowTimeMillis : Long = 1000,
+        minRssThreshold : Int = -100,
+        maxRssThreshold : Int = -40,
         getPressure: () -> Float = {0f},
         callback: RFDCallback
     ) {
@@ -49,9 +49,9 @@ class RFDGenerator(application: Application, val userID : String = "") {
                 if (!isGenerateRFD) {
                     val (isCheckBLESuccess, msgCheckBLE) = tjLabsBluetoothManager.checkPermissionsAndBleState()
                     if (isCheckBLESuccess) {
-                        tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleTrimIntervalMillis))
-                        tjLabsBluetoothManager.setRssMinThreshold(minBleThreshold)
-                        tjLabsBluetoothManager.setRssMaxThreshold(maxBleThreshold)
+                        tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
+                        tjLabsBluetoothManager.setRssMinThreshold(minRssThreshold)
+                        tjLabsBluetoothManager.setRssMaxThreshold(maxRssThreshold)
                         val (isSuccess, msg) = tjLabsBluetoothManager.startScan()
                         isGenerateRFD = isSuccess
                         tjLabsBluetoothManager.getBLEScanResult(object : TJLabsBluetoothManager.ScanResultListener {
