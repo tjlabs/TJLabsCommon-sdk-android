@@ -1,0 +1,32 @@
+package com.tjlabs.tjlabscommon_sdk_android.rfd
+
+import android.util.Log
+
+internal object TJLabsBluetoothFunctions {
+     fun removeBleScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
+        val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
+        bleScanInfoSetCopy.removeAll { it.timestampNanos < elapsedRealtimeNano }
+        return bleScanInfoSetCopy
+    }
+
+    fun averageBleScanInfoSet(bleScanInfoSet: MutableSet<BLEScanInfo>) : Map<String, Float> {
+        var averageMap = mapOf<String,Float>()
+        try {
+            val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
+            val beaconInfoGroupedById = bleScanInfoSetCopy.groupBy { it.id }
+            val rssiClassMap = beaconInfoGroupedById.map {
+                it.key to RSSIClass(
+                    count = it.value.count(),
+                    total = it.value.sumOf { beaconInfoListOfId -> beaconInfoListOfId.rssi }
+                )
+            }.toMap()
+            val log = "_"
+            rssiClassMap.map { log + "\n${it.key} // cnt : ${it.value.count} // mean : ${it.value.count / it.value.total}" }
+            averageMap = rssiClassMap.map { it.key to (it.value.getAverage()).toFloat()}.toMap()
+        } catch (e: Exception) {
+            Log.e("TJLabsBluetoothFunctions", "error, average BLE Scan Info")
+        }
+
+        return averageMap
+    }
+}

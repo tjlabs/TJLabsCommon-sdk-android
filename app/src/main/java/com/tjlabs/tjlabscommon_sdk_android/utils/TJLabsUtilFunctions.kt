@@ -1,7 +1,7 @@
 package com.tjlabs.tjlabscommon_sdk_android.utils
 
-import com.tjlabs.tjlabscommon_sdk_android.uvd.Attitude
-import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorAxisValue
+//import com.tjlabs.tjlabscommon_sdk_android.uvd.Attitude
+//import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorAxisValue
 import java.util.ArrayList
 import kotlin.math.PI
 import kotlin.math.abs
@@ -12,6 +12,14 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 object TJLabsUtilFunctions{
+    fun millis2nanos(millis : Long) : Long {
+        return millis * 1000 * 1000
+    }
+
+    fun nanos2millis(nanos : Long) : Long {
+        return nanos / (1000 * 1000)
+    }
+
     fun getCurrentTimeInMilliseconds() : Long{
         return System.currentTimeMillis()
     }
@@ -83,29 +91,28 @@ object TJLabsUtilFunctions{
         return null
     }
 
-
     internal fun calDegreeDeference(degreeA: Float, degree2: Float): Float {
         val diff = abs(degreeA - degree2)
         return diff.coerceAtMost(360 - diff)
     }
 
-    internal fun calAttEMA(preAttEMA: Attitude, curATT: Attitude, windowSize: Int): Attitude {
-        return Attitude(
-            exponentialMovingAverage(preAttEMA.roll, curATT.roll, windowSize),
-            exponentialMovingAverage(preAttEMA.pitch, curATT.pitch, windowSize),
-            exponentialMovingAverage(preAttEMA.yaw, curATT.yaw, windowSize)
-        )
-    }
-
-    internal fun calSensorAxisEMA(preArrayEMA: SensorAxisValue, curArray: SensorAxisValue, windowSize: Int): SensorAxisValue {
-        return SensorAxisValue(
-            exponentialMovingAverage(preArrayEMA.x, curArray.x, windowSize),
-            exponentialMovingAverage(preArrayEMA.y, curArray.y, windowSize),
-            exponentialMovingAverage(preArrayEMA.z, curArray.z, windowSize),
-            exponentialMovingAverage(preArrayEMA.norm, curArray.norm, windowSize)
-        )
-
-    }
+//    internal fun calAttEMA(preAttEMA: Attitude, curATT: Attitude, windowSize: Int): Attitude {
+//        return Attitude(
+//            exponentialMovingAverage(preAttEMA.roll, curATT.roll, windowSize),
+//            exponentialMovingAverage(preAttEMA.pitch, curATT.pitch, windowSize),
+//            exponentialMovingAverage(preAttEMA.yaw, curATT.yaw, windowSize)
+//        )
+//    }
+//
+//    internal fun calSensorAxisEMA(preArrayEMA: SensorAxisValue, curArray: SensorAxisValue, windowSize: Int): SensorAxisValue {
+//        return SensorAxisValue(
+//            exponentialMovingAverage(preArrayEMA.x, curArray.x, windowSize),
+//            exponentialMovingAverage(preArrayEMA.y, curArray.y, windowSize),
+//            exponentialMovingAverage(preArrayEMA.z, curArray.z, windowSize),
+//            exponentialMovingAverage(preArrayEMA.norm, curArray.norm, windowSize)
+//        )
+//
+//    }
 
     internal fun l2Normalize(originalVector: List<Float>): Float {
         val squaredVector = originalVector.map { it.pow(2) }
