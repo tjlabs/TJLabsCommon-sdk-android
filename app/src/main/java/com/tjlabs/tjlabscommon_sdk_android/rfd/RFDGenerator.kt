@@ -38,10 +38,10 @@ class RFDGenerator(application: Application, val userID : String = "") {
 
 
     fun generateRFD(
-        rfdIntervalMillis : Long = 1000,
+        rfdIntervalMillis : Long = 500,
         bleTrimIntervalMillis : Long = 1000,
         minBleThreshold : Int = -100,
-        maxBleThreshold : Int = 0,
+        maxBleThreshold : Int = -40,
         pressure: Float = 0f,
         callback: RFDCallback
     ) {
