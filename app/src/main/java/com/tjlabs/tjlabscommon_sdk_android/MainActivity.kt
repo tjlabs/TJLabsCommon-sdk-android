@@ -12,9 +12,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UVDGenerator
 
 class MainActivity : AppCompatActivity() {
     private lateinit var rfdGenerator : RFDGenerator
+    private lateinit var uvdGenerator: UVDGenerator
+
     private val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
@@ -47,16 +50,22 @@ class MainActivity : AppCompatActivity() {
 
 
         rfdGenerator = RFDGenerator(application, "temp")
+        uvdGenerator = UVDGenerator(application, "temp")
+
         btnStart.setOnClickListener {
             rfdGenerator.generateRfd(1000, 1000, -100, -40, getPressure = {0f}, object : RFDGenerator.RFDCallback{
                 override fun onRfdResult(success : Boolean, msg : String, rfd: ReceivedForce) {
                     Log.d("BLETimerListener", "success : $success // msg : $msg // rfd : $rfd")
                 }
             })
+
+            uvdGenerator.generateUvd(sensorFrequency = 1)
+
         }
 
         btnStop.setOnClickListener {
             rfdGenerator.stopRfdGeneration()
+            uvdGenerator.stopUvdGeneration()
         }
 
 
