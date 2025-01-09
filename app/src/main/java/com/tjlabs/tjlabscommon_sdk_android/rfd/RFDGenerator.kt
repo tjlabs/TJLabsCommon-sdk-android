@@ -8,7 +8,9 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 class RFDGenerator(application: Application, val userId : String = "") {
     interface RFDCallback {
-        fun onRfdResult(success : Boolean, msg : String, rfd: ReceivedForce)
+        fun onRfdResult(rfd: ReceivedForce)
+
+        fun onRfdError(error : String)
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -54,22 +56,25 @@ class RFDGenerator(application: Application, val userId : String = "") {
                         tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
                         val (isSuccess, msg) = tjLabsBluetoothManager.startScan()
                         isGenerateRfd = isSuccess
-                        tjLabsBluetoothManager.getBleScanResult(object : TJLabsBluetoothManager.ScanResultListener {
-                            override fun onScanBleSetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
-                                this@RFDGenerator.bleScanInfoSet = bleScanInfoSet
-                            }
-                        })
-                        callback.onRfdResult(isGenerateRfd, msg, ReceivedForce()) // 결과 리턴
+                        if (isSuccess) {
+                            tjLabsBluetoothManager.getBleScanResult(object : TJLabsBluetoothManager.ScanResultListener {
+                                override fun onScanBleSetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
+                                    this@RFDGenerator.bleScanInfoSet = bleScanInfoSet
+                                }
+                            })
+                        } else {
+                            callback.onRfdError(msg)
+                        }
+
                     }else{
-                        callback.onRfdResult(isGenerateRfd, msgCheckBle, ReceivedForce()) // 결과 리턴
+                        callback.onRfdError(msgCheckBle)
                     }
                 } else {
                     val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                     val averageBleMap = TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
-                    callback.onRfdResult(isGenerateRfd, "", ReceivedForce(userId, System.currentTimeMillis(), averageBleMap, getPressure())) // 결과 리턴
+                    callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis(), averageBleMap, getPressure())) // 결과 리턴
                 }
 
-                // 성공했을 때만 주기적으로 콜백
                 if (isGenerateRfd) {
                     handler.postDelayed(this, rfdIntervalMillis)
                 }
