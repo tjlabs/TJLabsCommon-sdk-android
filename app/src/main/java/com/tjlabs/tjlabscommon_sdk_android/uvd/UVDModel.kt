@@ -54,7 +54,7 @@ internal enum class SensorPatternType {
     NONE, PEAK, VALLEY
 }
 
-internal data class TimestampFloatData(
+internal data class TimeStampFloat(
     var timestamp: Long,
     var valuestamp: Float
 )
