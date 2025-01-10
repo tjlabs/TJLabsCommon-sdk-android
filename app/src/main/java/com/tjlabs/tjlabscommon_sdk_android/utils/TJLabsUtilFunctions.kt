@@ -130,7 +130,7 @@ object TJLabsUtilFunctions{
         return orientation
     }
 
-    fun getRotationMatrixFromVector(rotationVector: FloatArray, returnSize: Int): Array<Array<Float>> {
+    internal fun getRotationMatrixFromVector(rotationVector: FloatArray, returnSize: Int): Array<Array<Float>> {
         val rotationMatrix = Array(4) { Array(4) { 0f } }
 
         val q1 = rotationVector[0]
