@@ -24,7 +24,7 @@ internal class TJLabsSensorManager(private val context : Context): SensorEventLi
     private val handler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
     private var isRunning = false
-    private var frequency = 40
+    private val frequency = 40
 
     init {
         initSensorManager()
@@ -45,10 +45,6 @@ internal class TJLabsSensorManager(private val context : Context): SensorEventLi
             sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_GAME)
         sensorManager.registerListener(this,
             sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_GAME)
-    }
-
-    fun setSensorFrequency(frequency : Int = 40) {
-        this.frequency = frequency
     }
 
     fun checkSensorAvailability() : Pair<Boolean, String> {
