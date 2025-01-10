@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UVDGenerator
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var rfdGenerator : RFDGenerator
@@ -59,7 +60,22 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
-            uvdGenerator.generateUvd(sensorFrequency = 1)
+            uvdGenerator.generateUvd(maxPDRStepLength = 0.7f, callback = object : UVDGenerator.UVDCallback{
+                override fun onUvdResult(uvd: UserVelocity) {
+                    Log.d("UVDResult", uvd.toString())
+                }
+
+                override fun onVelocityResult(kmPh: Float) {
+                    Log.d("UVDVelocityResult", kmPh.toString())
+                }
+
+                override fun onUvdPauseMillis(time: Long) {
+                    Log.d("UVDPauseMillis", time.toString())
+                }
+
+                override fun onUvdError(error: String) {
+                }
+            })
 
         }
 
