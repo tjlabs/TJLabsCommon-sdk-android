@@ -3,7 +3,7 @@ package com.tjlabs.tjlabscommon_sdk_android.uvd.pdr
 import com.tjlabs.tjlabscommon_sdk_android.uvd.TimeStampFloat
 import java.util.LinkedList
 
-internal class TJLabsStepLengthEstimation
+internal class TJLabsStepLengthEstimator
 {
     private var defaultStepLength: Float = 0.6f
     private var minStepLength: Float = 0.5f

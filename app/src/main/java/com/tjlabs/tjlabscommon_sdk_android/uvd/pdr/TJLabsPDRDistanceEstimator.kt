@@ -11,7 +11,7 @@ import java.util.LinkedList
 internal class TJLabsPDRDistanceEstimator
 {
     private val peakValleyDetector = TJLabsPeakValleyDetector()
-    private val stepLengthEstimator = TJLabsStepLengthEstimation()
+    private val stepLengthEstimator = TJLabsStepLengthEstimator()
     private var preAccNormEMA = 0f
     private var accNormEMAQueue = LinkedList<TimeStampFloat>()
     private var finalUnitResult = UnitDistance()
