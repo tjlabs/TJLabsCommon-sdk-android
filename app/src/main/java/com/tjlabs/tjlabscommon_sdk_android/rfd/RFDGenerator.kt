@@ -25,6 +25,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
         setScanMode(ScanMode.ONLY_WARD_SCAN)
     }
 
+    fun isAirplaneModeEnabled(): Boolean {
+        return Settings.Global.getInt(
+            application.contentResolver,
+            Settings.Global.AIRPLANE_MODE_ON,
+            0 // 기본값: 0 (비활성화)
+        ) != 0 // 0이 아니면 활성화
+    }
+
+    
     fun setScanMode(scanMode: ScanMode) {
         val scanFilters = when (scanMode) {
             ScanMode.NO_FILTER_SCAN -> listOf()
