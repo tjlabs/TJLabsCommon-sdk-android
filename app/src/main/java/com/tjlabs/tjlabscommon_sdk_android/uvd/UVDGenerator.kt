@@ -94,7 +94,6 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         tjLabsAttitudeEstimator = TJLabsAttitudeEstimator(sensorFrequency)
         tjLabsUnitStatusEstimator = TJLabsUnitStatusEstimator()
         uvdGenerationTimeMillis = 0L
-        userMode = UserMode.MODE_PEDESTRIAN
         drVelocityScale = 1f
     }
 }
