@@ -48,5 +48,4 @@ internal object RFDErrorCode {
 
     //RFD Generation Service
     const val DUPLICATE_SCAN_START = 400
-    const val INVALID_SCAN_MODE = 401
 }
