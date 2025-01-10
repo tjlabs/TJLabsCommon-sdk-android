@@ -69,10 +69,10 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         } else {
             callback.onUvdPauseMillis(System.currentTimeMillis() - uvdGenerationTimeMillis)
         }
-        callback.onVelocityResult(zeroVelocityAfterSeconds(pdrUnit.velocity))
+        callback.onVelocityResult(resetVelocityAfterSeconds(pdrUnit.velocity))
     }
 
-    private fun zeroVelocityAfterSeconds(velocity : Float, sec : Int = 2) : Float {
+    private fun resetVelocityAfterSeconds(velocity : Float, sec : Int = 2) : Float {
         return if (System.currentTimeMillis() - uvdGenerationTimeMillis < sec * 1000) {
             velocity
         } else {
