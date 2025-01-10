@@ -1,5 +1,7 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
+
 data class UserVelocity(
     val user_id: String = "",
     val mobile_time: Long = 0L,
@@ -15,6 +17,10 @@ data class UnitDistance(
     var velocity: Float = 0f,
     var isIndexChanged: Boolean = false
 )
+
+enum class UserMode{
+    MODE_PEDESTRIAN, MODE_VEHICLE, MODE_AUTO
+}
 
 internal data class SensorData(
     var acc: FloatArray = FloatArray(3),
@@ -44,11 +50,21 @@ internal data class Attitude(
     fun isNan(): Boolean {
         return roll.isNaN() || pitch.isNaN() || yaw.isNaN()
     }
+
+    fun toDegree() : Attitude {
+        return Attitude(TJLabsUtilFunctions.radian2degree(roll),
+            TJLabsUtilFunctions.radian2degree(pitch),
+            TJLabsUtilFunctions.radian2degree(yaw))
+    }
 }
 
-enum class UserMode{
-    MODE_PEDESTRIAN, MODE_VEHICLE, MODE_AUTO
-}
+internal data class SensorAxisValue(
+    var x: Float = 0f,
+    var y: Float = 0f,
+    var z: Float = 0f,
+    var norm: Float = 0f
+)
+
 
 internal enum class SensorPatternType {
     NONE, PEAK, VALLEY
