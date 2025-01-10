@@ -10,7 +10,7 @@ class RFDGenerator(application: Application, val userId : String = "") {
     interface RFDCallback {
         fun onRfdResult(rfd: ReceivedForce)
 
-        fun onRfdError(error : String)
+        fun onRfdError(code : Int, msg : String)
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -63,11 +63,11 @@ class RFDGenerator(application: Application, val userId : String = "") {
                                 }
                             })
                         } else {
-                            callback.onRfdError(msg)
+                            callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, msg)
                         }
 
                     }else{
-                        callback.onRfdError(msgCheckBle)
+                        callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, msgCheckBle)
                     }
                 } else {
                     val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
