@@ -3,6 +3,9 @@ package com.tjlabs.tjlabscommon_sdk_android.uvd
 import android.app.Application
 import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
 
+
+private const val sensorFrequency = 40
+
 class UVDGenerator(application: Application, private val userId : String = "") {
     interface UVDCallback {
         fun onUvdResult(mode : UserMode, uvd: UserVelocity)
@@ -13,10 +16,9 @@ class UVDGenerator(application: Application, private val userId : String = "") {
 
         fun onUvdError(error : String)
     }
-
-    private val tjLabsSensorManager : TJLabsSensorManager = TJLabsSensorManager(application)
+    private val tjLabsSensorManager : TJLabsSensorManager = TJLabsSensorManager(application,sensorFrequency)
+    private var tjLabsAttitudeEstimator : TJLabsAttitudeEstimator = TJLabsAttitudeEstimator(sensorFrequency)
     private var tjLabsPdrDistanceEstimator : TJLabsPDRDistanceEstimator = TJLabsPDRDistanceEstimator()
-    private var tjLabsAttitudeEstimator : TJLabsAttitudeEstimator = TJLabsAttitudeEstimator()
     private var tjLabsUnitStatusEstimator = TJLabsUnitStatusEstimator()
     private var uvdGenerationTimeMillis = 0L
     private var userMode = UserMode.MODE_PEDESTRIAN
@@ -89,7 +91,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
     fun stopUvdGeneration() {
         tjLabsSensorManager.stopSensorChanged()
         tjLabsPdrDistanceEstimator = TJLabsPDRDistanceEstimator()
-        tjLabsAttitudeEstimator = TJLabsAttitudeEstimator()
+        tjLabsAttitudeEstimator = TJLabsAttitudeEstimator(sensorFrequency)
         tjLabsUnitStatusEstimator = TJLabsUnitStatusEstimator()
         uvdGenerationTimeMillis = 0L
         userMode = UserMode.MODE_PEDESTRIAN

@@ -8,7 +8,7 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsin
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.transBody2Nav
 
 
-internal class TJLabsAttitudeEstimator {
+internal class TJLabsAttitudeEstimator(private val frequency : Int) {
     private var timeBefore: Long? = null
     private var headingGyroGame: Float = 0f
     private var headingGyroAcc: Float = 0f
@@ -16,7 +16,6 @@ internal class TJLabsAttitudeEstimator {
     private var preAccAttEMA = Attitude(0f, 0f, 0f)
     private var preAngleOfRotation = 0f
     private var preAccAngleOfRotation = 0f
-    private val frequency = 40
     private val avgAttitudeWindow = (frequency / 2)
 
     fun estimateAttitudeRadian(time: Long, sensorData: SensorData): Attitude {

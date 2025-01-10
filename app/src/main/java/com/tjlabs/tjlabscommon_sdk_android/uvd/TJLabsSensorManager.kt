@@ -11,7 +11,7 @@ import android.os.Looper
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 
-internal class TJLabsSensorManager(private val context : Context): SensorEventListener {
+internal class TJLabsSensorManager(private val context : Context, private val frequency : Int): SensorEventListener {
     interface SensorResultListener {
         fun onSensorChangedResult(sensorData : SensorData)
     }
@@ -24,7 +24,6 @@ internal class TJLabsSensorManager(private val context : Context): SensorEventLi
     private val handler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
     private var isRunning = false
-    private val frequency = 40
 
     init {
         initSensorManager()
