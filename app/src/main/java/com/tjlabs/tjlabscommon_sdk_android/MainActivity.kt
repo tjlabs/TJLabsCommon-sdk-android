@@ -12,9 +12,14 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UVDGenerator
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UserMode
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var rfdGenerator : RFDGenerator
+    private lateinit var uvdGenerator: UVDGenerator
+
     private val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
@@ -47,6 +52,8 @@ class MainActivity : AppCompatActivity() {
 
 
         rfdGenerator = RFDGenerator(application, "temp")
+        uvdGenerator = UVDGenerator(application, "temp")
+
         btnStart.setOnClickListener {
             rfdGenerator.generateRfd(1000, 1000, -100, -40, getPressure = {0f}, object : RFDGenerator.RFDCallback{
                 override fun onRfdResult(rfd: ReceivedForce) {
@@ -57,10 +64,29 @@ class MainActivity : AppCompatActivity() {
                     Log.d("BLETimerListener", "error : $error")
                 }
             })
+
+            uvdGenerator.generateUvd(maxPDRStepLength = 0.7f, callback = object : UVDGenerator.UVDCallback{
+                override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
+                    Log.d("UVDVelocityResult", "mode : $mode // uvd : $uvd")
+                }
+
+                override fun onVelocityResult(kmPh: Float) {
+                    Log.d("UVDVelocityResult", kmPh.toString())
+                }
+
+                override fun onUvdPauseMillis(time: Long) {
+                    Log.d("UVDPauseMillis", time.toString())
+                }
+
+                override fun onUvdError(error: String) {
+                }
+            })
+
         }
 
         btnStop.setOnClickListener {
             rfdGenerator.stopRfdGeneration()
+            uvdGenerator.stopUvdGeneration()
         }
 
 
