@@ -5,15 +5,8 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAttEMA
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAttitudeUsingGameVector
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
-import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.getOrientation
-import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.getRotationMatrixFromVector
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.transBody2Nav
-import kotlin.math.PI
-import kotlin.math.atan
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
+
 
 internal class TJLabsAttitudeEstimator {
     private var timeBefore: Long? = null
