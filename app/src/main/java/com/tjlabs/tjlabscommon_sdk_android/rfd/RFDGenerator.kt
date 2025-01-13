@@ -24,12 +24,14 @@ class RFDGenerator(private val application: Application, val userId : String = "
         setScanMode(ScanMode.ONLY_WARD_SCAN)
     }
 
-    fun isAirplaneMode(): Boolean {
-        return Settings.Global.getInt(
-            application.contentResolver,
-            Settings.Global.AIRPLANE_MODE_ON,
-            0 // 기본값: 0 (비활성화)
-        ) != 0 // 0이 아니면 활성화
+    fun isAirplaneMode(): Pair<Boolean, String> {
+        val isAirplaneMode = Settings.Global.getInt(application.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0
+        return if (isAirplaneMode) {
+            Pair(false, "Please turn off airplan mode")
+        } else {
+            Pair(true, "")
+        }
+
     }
 
     fun setScanMode(scanMode: ScanMode) {
@@ -61,9 +63,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
 
         timerRunnable = object : Runnable {
             override fun run() {
+                val (isCheckAirplaneMode, msgIsAirplaneMode) = isAirplaneMode()
                 val (isCheckBleAvailable, msgCheckBleAvailable) = tjLabsBluetoothManager.checkBleAvailable()
                 val (isCheckBlePermission, msgCheckBlePermission) = tjLabsBluetoothManager.checkPermissions()
                 val (isCheckBleActivation, msgCheckBleActivation) = tjLabsBluetoothManager.checkBleActivation()
+
+                if (isCheckAirplaneMode) {
+                    callback.onRfdError(RFDErrorCode.AIRPLANE_MODE_ACTIVATION, msgIsAirplaneMode)
+                    return
+                }
 
                 if (!isCheckBleAvailable) {
                     callback.onRfdError(RFDErrorCode.BLUETOOTH_NOT_SUPPORTED, msgCheckBleAvailable)
