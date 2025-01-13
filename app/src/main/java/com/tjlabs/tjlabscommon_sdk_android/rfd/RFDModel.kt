@@ -31,7 +31,7 @@ enum class ScanMode{
     NO_FILTER_SCAN, ONLY_WARD_SCAN, ONLY_SEI_SCAN, WARD_SEI_SCAN
 }
 
-internal object RFDErrorCode {
+object RFDErrorCode {
     //BLE Hardware
     const val BLUETOOTH_DISABLED = 100
     const val BLUETOOTH_NOT_SUPPORTED = 101
