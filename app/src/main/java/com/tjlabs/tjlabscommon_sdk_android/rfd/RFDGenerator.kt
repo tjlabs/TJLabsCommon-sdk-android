@@ -18,7 +18,6 @@ class RFDGenerator(private val application: Application, val userId : String = "
     private var timerRunnable: Runnable? = null
     private var tjLabsBluetoothManager: TJLabsBluetoothManager = TJLabsBluetoothManager(application)
     private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
-    private var isGenerateRfd = false
 
     init {
         setScanMode(ScanMode.ONLY_WARD_SCAN)
@@ -68,7 +67,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 val (isCheckBlePermission, msgCheckBlePermission) = tjLabsBluetoothManager.checkPermissions()
                 val (isCheckBleActivation, msgCheckBleActivation) = tjLabsBluetoothManager.checkBleActivation()
 
-                if (isCheckAirplaneMode) {
+                if (!isCheckAirplaneMode) {
                     callback.onRfdError(RFDErrorCode.AIRPLANE_MODE_ACTIVATION, msgIsAirplaneMode)
                     return
                 }
@@ -91,29 +90,19 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
                 tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
                 tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
+                tjLabsBluetoothManager.startScan()
 
-                val (isSuccess, msg) = tjLabsBluetoothManager.startScan()
-                isGenerateRfd = isSuccess
+                tjLabsBluetoothManager.getBleScanResult(object :
+                    TJLabsBluetoothManager.ScanResultListener {
+                    override fun onScanBleSetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
+                        this@RFDGenerator.bleScanInfoSet = bleScanInfoSet
+                    }
+                })
 
-                if (isGenerateRfd) {
-                    tjLabsBluetoothManager.getBleScanResult(object :
-                        TJLabsBluetoothManager.ScanResultListener {
-                        override fun onScanBleSetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
-                            this@RFDGenerator.bleScanInfoSet = bleScanInfoSet
-                        }
-                    })
-                } else {
-                    callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, msg)
-                    return
-                }
-
-                if (isGenerateRfd) {
-                    val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
-                    val averageBleMap = TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
-                    callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis(), averageBleMap, getPressure())) // 결과 리턴
-                    handler.postDelayed(this, rfdIntervalMillis)
-                }
-
+                val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
+                val averageBleMap = TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
+                callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis(), averageBleMap, getPressure())) // 결과 리턴
+                handler.postDelayed(this, rfdIntervalMillis)
             }
         }
         handler.postDelayed(timerRunnable!!, rfdIntervalMillis)
@@ -126,7 +115,6 @@ class RFDGenerator(private val application: Application, val userId : String = "
             timerRunnable = null
         }
         tjLabsBluetoothManager.stopScan()
-        isGenerateRfd = false
         bleScanInfoSet.clear()
     }
 

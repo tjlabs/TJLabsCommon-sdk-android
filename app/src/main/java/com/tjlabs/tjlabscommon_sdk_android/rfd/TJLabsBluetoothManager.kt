@@ -1,6 +1,7 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
@@ -117,26 +118,8 @@ internal class TJLabsBluetoothManager(private val context: Context) {
         bleScanInfoSetTimeLimitNanos = nanoSec
     }
 
+    @SuppressLint("MissingPermission")
     fun startScan() : Pair<Boolean, String> {
-        // 권한 확인
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
-                != PackageManager.PERMISSION_GRANTED) {
-                return Pair(false, "BLUETOOTH_SCAN permission is required.")
-            }
-        } else {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-                return Pair(false, "ACCESS_FINE_LOCATION permission is required.")
-            }
-        }
-
-        // BLE 활성화 상태 확인
-        if (bluetoothAdapter?.isEnabled != true) {
-            return Pair(false, "Bluetooth is not enabled.")
-        }
-
-        // 스캔 시작
         bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallbackClass)
         return Pair(true, "Success Start Scan")
     }
