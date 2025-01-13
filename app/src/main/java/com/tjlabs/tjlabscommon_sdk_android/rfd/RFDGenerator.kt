@@ -23,7 +23,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
         setScanMode(ScanMode.ONLY_WARD_SCAN)
     }
 
-    fun isAirplaneMode(): Pair<Boolean, String> {
+    private fun isAirplaneMode(): Pair<Boolean, String> {
         val isAirplaneMode = Settings.Global.getInt(application.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0
         return if (isAirplaneMode) {
             Pair(false, "Please turn off airplan mode")
