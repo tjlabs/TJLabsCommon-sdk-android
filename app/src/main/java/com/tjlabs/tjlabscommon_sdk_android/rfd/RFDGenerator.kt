@@ -114,7 +114,9 @@ class RFDGenerator(private val application: Application, val userId : String = "
             handler.removeCallbacks(it)
             timerRunnable = null
         }
+
         tjLabsBluetoothManager.stopScan()
+        // TODO() stopScan 리턴 활용하기
         bleScanInfoSet.clear()
     }
 
