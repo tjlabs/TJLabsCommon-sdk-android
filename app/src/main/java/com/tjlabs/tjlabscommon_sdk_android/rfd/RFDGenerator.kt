@@ -25,7 +25,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
         setScanMode(ScanMode.ONLY_WARD_SCAN)
     }
 
-    fun isAirplaneModeEnabled(): Boolean {
+    fun isAirplaneMode(): Boolean {
         return Settings.Global.getInt(
             application.contentResolver,
             Settings.Global.AIRPLANE_MODE_ON,
@@ -33,7 +33,6 @@ class RFDGenerator(private val application: Application, val userId : String = "
         ) != 0 // 0이 아니면 활성화
     }
 
-    
     fun setScanMode(scanMode: ScanMode) {
         val scanFilters = when (scanMode) {
             ScanMode.NO_FILTER_SCAN -> listOf()
@@ -44,7 +43,6 @@ class RFDGenerator(private val application: Application, val userId : String = "
             )
             ScanMode.ONLY_SEI_SCAN -> listOf()
             ScanMode.WARD_SEI_SCAN -> listOf()
-            else -> listOf()
         }
         tjLabsBluetoothManager.setScanFilters(scanFilters)
     }
@@ -59,6 +57,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
     ) {
         if (timerRunnable != null) {
             handler.removeCallbacks(timerRunnable!!)
+            callback.onRfdError(RFDErrorCode.DUPLICATE_SCAN_START, "duplicate scan start error")
         }
 
         timerRunnable = object : Runnable {
@@ -82,11 +81,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     return
                 }
 
-                tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(
-                    TJLabsUtilFunctions.millis2nanos(
-                        bleScanWindowTimeMillis
-                    )
-                )
+                tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
                 tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
                 tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
 
@@ -112,8 +107,6 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     handler.postDelayed(this, rfdIntervalMillis)
                 }
 
-                //1초마다 exception 이 발생하는지 체크하기?
-
             }
         }
         handler.postDelayed(timerRunnable!!, rfdIntervalMillis)
@@ -128,6 +121,16 @@ class RFDGenerator(private val application: Application, val userId : String = "
         tjLabsBluetoothManager.stopScan()
         isGenerateRfd = false
         bleScanInfoSet.clear()
+    }
+
+    fun checkRFDException(callback: RFDCallback){
+        //1. RFD 발생마다 exception 이 발생하는지 체크하기?
+        //2. RFD State 가 변하는 것을 감지하고 에러 체크하기?
+        //3,,,
+        //TODO()
+        val errorCode = 0
+        val errorMsg = "Errorrrrr"
+        callback.onRfdError(errorCode, errorMsg)
     }
 
 
