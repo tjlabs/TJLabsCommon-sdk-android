@@ -1,11 +1,14 @@
 package com.tjlabs.tjlabscommon_sdk_android
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -53,8 +56,8 @@ class MainActivity : AppCompatActivity() {
                     Log.d("BLETimerListener", "rfd : $rfd")
                 }
 
-                override fun onRfdError(error: String) {
-                    Log.d("BLETimerListener", "error : $error")
+                override fun onRfdError(code : Int, msg : String) {
+                    Log.d("BLETimerListener", "error : $msg")
                 }
             })
         }
@@ -62,9 +65,8 @@ class MainActivity : AppCompatActivity() {
         btnStop.setOnClickListener {
             rfdGenerator.stopRfdGeneration()
         }
-
-
     }
+
 
     private fun checkPermissions() {
         val rejectedPermissionList = ArrayList<String>()
