@@ -1,7 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 import android.app.Application
 import android.bluetooth.le.ScanFilter
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
@@ -123,7 +122,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
         bleScanInfoSet.clear()
     }
 
-    fun checkRFDException(callback: RFDCallback){
+    fun checkRfdException(callback: RFDCallback){
         //1. RFD 발생마다 exception 이 발생하는지 체크하기?
         //2. RFD State 가 변하는 것을 감지하고 에러 체크하기?
         //3,,,
