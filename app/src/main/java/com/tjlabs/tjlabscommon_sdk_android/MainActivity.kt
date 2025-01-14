@@ -73,6 +73,10 @@ class MainActivity : AppCompatActivity() {
                     Log.d("UVDVelocityResult", "mode : $mode // uvd : $uvd")
                 }
 
+                override fun onPressureResult(hPa: Float) {
+                    Log.d("UVDVelocityResult", hPa.toString())
+                }
+
                 override fun onVelocityResult(kmPh: Float) {
                     Log.d("UVDVelocityResult", kmPh.toString())
                 }
