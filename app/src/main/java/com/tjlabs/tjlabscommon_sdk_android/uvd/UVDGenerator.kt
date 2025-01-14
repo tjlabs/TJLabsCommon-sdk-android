@@ -10,6 +10,8 @@ class UVDGenerator(application: Application, private val userId : String = "") {
     interface UVDCallback {
         fun onUvdResult(mode : UserMode, uvd: UserVelocity)
 
+        fun onPressureResult(hPa : Float)
+
         fun onVelocityResult(kmPh : Float)
 
         fun onUvdPauseMillis(time : Long)
@@ -69,6 +71,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         } else {
             callback.onUvdPauseMillis(System.currentTimeMillis() - uvdGenerationTimeMillis)
         }
+        callback.onPressureResult(sensorData.pressure[0])
         callback.onVelocityResult(resetVelocityAfterSeconds(pdrUnit.velocity))
     }
 
