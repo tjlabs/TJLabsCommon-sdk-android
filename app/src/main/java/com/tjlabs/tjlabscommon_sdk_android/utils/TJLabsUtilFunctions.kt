@@ -44,6 +44,13 @@ object TJLabsUtilFunctions{
         return radian * 180 / PI.toFloat()
     }
 
+    fun compensateDegree(degree : Float) : Float {
+        var remainderHeading = degree % 360
+        if (remainderHeading < 0)
+            remainderHeading += 360
+        return remainderHeading
+    }
+
     internal fun removeLevelDirectionString(levelName : String) : String {
         var currentLevelName = levelName
         if (currentLevelName.isNotEmpty()) {
@@ -57,13 +64,6 @@ object TJLabsUtilFunctions{
     internal fun movingAverage(preAvgValue: Float, curValue: Float, windowSize: Int): Float {
         val windowSizeFloat = windowSize.toFloat()
         return preAvgValue * ((windowSizeFloat - 1) / windowSizeFloat) + (curValue / windowSizeFloat)
-    }
-
-    internal fun compensateDegree(degree : Float) : Float {
-        var remainderHeading = degree % 360
-        if (remainderHeading < 0)
-            remainderHeading += 360
-        return remainderHeading
     }
 
     internal fun weightedAverageDegree(degreeA: Float, degreeB: Float, weightA: Float, weightB: Float): Float {
