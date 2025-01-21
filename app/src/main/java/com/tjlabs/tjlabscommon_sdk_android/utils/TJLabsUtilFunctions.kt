@@ -51,6 +51,46 @@ object TJLabsUtilFunctions{
         return remainderHeading
     }
 
+    fun circularStandardDeviation(array: List<Float>): Float {
+        if (array.isEmpty()) {
+            return 20.0f
+        }
+        val meanAngle = circularMean(array)
+
+        val circularDifferences = array.map { angleDifference(it, meanAngle) }
+        val circularVariance = circularSumByDouble(circularDifferences) / circularDifferences.size
+        return sqrt(circularVariance)
+    }
+
+    private fun angleDifference(a1: Float, a2: Float): Float {
+        val diff = abs(a1 - a2)
+        return if (diff <= 180.0) diff else 360.0f - diff
+    }
+
+    private fun circularSumByDouble(array:List<Float>) : Float{
+        var sum = 0f
+        for (angle in array){
+            sum += angle * angle
+        }
+        return sum
+    }
+
+    private fun circularMean(array: List<Float>): Float {
+        if (array.isEmpty()) {
+            return 0.0f
+        }
+        var sinSum = 0.0
+        var cosSum = 0.0
+        for (angle in array) {
+            sinSum += sin(angle * Math.PI / 180.0)
+            cosSum += cos(angle * Math.PI / 180.0)
+        }
+        val meanSin = sinSum / array.size.toFloat()
+        val meanCos = cosSum / array.size.toFloat()
+        val meanAngle =(atan2(meanSin, meanCos) * 180.0 / Math.PI).toFloat()
+        return if (meanAngle < 0) meanAngle + 360.0f else meanAngle
+    }
+
     internal fun removeLevelDirectionString(levelName : String) : String {
         var currentLevelName = levelName
         if (currentLevelName.isNotEmpty()) {

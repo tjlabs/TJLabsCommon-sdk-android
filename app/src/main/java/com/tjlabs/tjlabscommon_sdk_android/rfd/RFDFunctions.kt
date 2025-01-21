@@ -1,6 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
-class RFDFunctions {
+object RFDFunctions {
     fun checkBleChannelNum(bleMap: Map<String, Float>?, threshold : Float = -95f): Int {
         var numChannels = 0
         bleMap?.forEach { (key, value) ->
