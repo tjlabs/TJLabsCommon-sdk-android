@@ -5,7 +5,7 @@ import com.tjlabs.tjlabscommon_sdk_android.uvd.dr.TJLabsDRDistanceEstimator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
 
 
-private const val sensorFrequency = 40
+const val sensorFrequency = 40
 
 class UVDGenerator(application: Application, private val userId : String = "") {
     interface UVDCallback {
@@ -60,6 +60,14 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         }
     }
 
+    private fun resetVelocityAfterSeconds(velocity : Float, sec : Int = 2) : Float {
+        return if (System.currentTimeMillis() - uvdGenerationTimeMillis < sec * 1000) {
+            velocity
+        } else {
+            0f
+        }
+    }
+
     private fun generatePedestrianUvd(sensorData: SensorData, callback: UVDCallback) {
         val pdrUnit = tjLabsPdrDistanceEstimator.estimateDistanceInfo(System.currentTimeMillis(), sensorData)
         val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(System.currentTimeMillis(), sensorData).toDegree()
@@ -77,18 +85,11 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         callback.onVelocityResult(resetVelocityAfterSeconds(pdrUnit.velocity))
     }
 
-    private fun resetVelocityAfterSeconds(velocity : Float, sec : Int = 2) : Float {
-        return if (System.currentTimeMillis() - uvdGenerationTimeMillis < sec * 1000) {
-            velocity
-        } else {
-            0f
-        }
-    }
-
     private fun generateVehicleUvd(sensorData: SensorData, callback: UVDCallback) {
         val drUnit = tjLabsDrDistanceEstimator.estimateDistanceInfo(System.currentTimeMillis(), sensorData)
         val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(System.currentTimeMillis(), sensorData).toDegree()
         //TODO() 자석 거치 상황인지 확인
+        //TODO() calAccBias?
         if (drUnit.isIndexChanged) {
             val index = drUnit.index
             val length = drUnit.length
