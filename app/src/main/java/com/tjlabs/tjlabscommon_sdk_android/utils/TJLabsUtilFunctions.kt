@@ -64,7 +64,7 @@ object TJLabsUtilFunctions{
             return (bufferSum / (buffer.size - 1)).toFloat()
         }
     }
-    
+
     fun circularStandardDeviation(array: List<Float>): Float {
         if (array.isEmpty()) {
             return 20.0f
@@ -238,7 +238,7 @@ object TJLabsUtilFunctions{
         return rotationMatrix
     }
 
-    internal fun l2Normalize(originalVector: List<Float>): Float {
+    internal fun l2Normalize(originalVector: FloatArray): Float {
         val squaredVector = originalVector.map { it.pow(2) }
         return sqrt(squaredVector.sum())
     }
