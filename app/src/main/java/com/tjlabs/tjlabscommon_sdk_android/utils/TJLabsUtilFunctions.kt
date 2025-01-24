@@ -91,7 +91,7 @@ object TJLabsUtilFunctions{
         return if (meanAngle < 0) meanAngle + 360.0f else meanAngle
     }
 
-    internal fun removeLevelDirectionString(levelName : String) : String {
+    fun removeLevelDirectionString(levelName : String) : String {
         var currentLevelName = levelName
         if (currentLevelName.isNotEmpty()) {
             if (currentLevelName[currentLevelName.lastIndex].toString() == "D") {
