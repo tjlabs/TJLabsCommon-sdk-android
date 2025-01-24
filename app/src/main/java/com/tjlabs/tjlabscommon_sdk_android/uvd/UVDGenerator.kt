@@ -1,6 +1,7 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
 import android.app.Application
+import com.tjlabs.tjlabscommon_sdk_android.uvd.dr.TJLabsDRDistanceEstimator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
 
 
@@ -21,6 +22,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
     private val tjLabsSensorManager : TJLabsSensorManager = TJLabsSensorManager(application,sensorFrequency)
     private var tjLabsAttitudeEstimator : TJLabsAttitudeEstimator = TJLabsAttitudeEstimator(sensorFrequency)
     private var tjLabsPdrDistanceEstimator : TJLabsPDRDistanceEstimator = TJLabsPDRDistanceEstimator()
+    private var tjLabsDrDistanceEstimator : TJLabsDRDistanceEstimator = TJLabsDRDistanceEstimator()
     private var tjLabsUnitStatusEstimator = TJLabsUnitStatusEstimator()
     private var uvdGenerationTimeMillis = 0L
     private var userMode = UserMode.MODE_PEDESTRIAN
@@ -48,7 +50,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
                 override fun onSensorChangedResult(sensorData: SensorData) {
                     when (userMode) {
                         UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(sensorData, callback)
-                        UserMode.MODE_VEHICLE -> TODO()
+                        UserMode.MODE_VEHICLE -> generateVehicleUvd(sensorData, callback)
                         UserMode.MODE_AUTO -> TODO()
                     }
                 }
@@ -83,8 +85,21 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         }
     }
 
-    private fun generateVehicleUvd() {
-        TODO()
+    private fun generateVehicleUvd(sensorData: SensorData, callback: UVDCallback) {
+        val drUnit = tjLabsDrDistanceEstimator.estimateDistanceInfo(System.currentTimeMillis(), sensorData)
+        val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(System.currentTimeMillis(), sensorData).toDegree()
+        //TODO() 자석 거치 상황인지 확인
+        if (drUnit.isIndexChanged) {
+            val index = drUnit.index
+            val length = drUnit.length
+            val heading = attDegree.yaw
+            callback.onUvdResult(UserMode.MODE_PEDESTRIAN, UserVelocity(userId, System.currentTimeMillis(), index, length, heading, true))
+            uvdGenerationTimeMillis = System.currentTimeMillis()
+        } else {
+            callback.onUvdPauseMillis(System.currentTimeMillis() - uvdGenerationTimeMillis)
+        }
+        callback.onPressureResult(sensorData.pressure[0])
+        callback.onVelocityResult(resetVelocityAfterSeconds(drUnit.velocity))
     }
 
     private fun generateAutoUvd() {
