@@ -1,6 +1,5 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.dr
 
-import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calVariance
@@ -103,7 +102,7 @@ internal class TJLabsDRDistanceEstimator {
         }
 
         // ----- Mag Norm Var------ //
-        val magNormVarResult = processSmoothing(
+        val magNormVarSmoothingResult = processSmoothing(
             currentValue = magNormSmoothingVar,
             previousSmoothedValue = preMagVarFeature,
             queue = magNormVarQueue,
@@ -111,7 +110,7 @@ internal class TJLabsDRDistanceEstimator {
             maxQueueSize = sensorFrequency  * 2
         )
 
-        val magVarSmoothing = magNormVarResult.first
+        val magVarSmoothing = magNormVarSmoothingResult.first
         preMagVarFeature = magNormSmoothingResult.first
         magNormVarQueue = magNormSmoothingResult.second
         // --------------- //
