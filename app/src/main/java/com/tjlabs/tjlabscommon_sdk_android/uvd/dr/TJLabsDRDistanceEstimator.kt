@@ -30,7 +30,6 @@ internal class TJLabsDRDistanceEstimator {
     private var preMagNormSmoothing: Float = 0f
     private var preMagNormVarSmoothing: Float = 0f
     private var preVelocitySmoothing: Float = 0f
-    private var scCompensation = 1.0f
     private var velocityScale: Float = 1.0f
     private var entranceVelocityScale: Float = 1.0f
     private var preTime: Long = 0L
@@ -38,14 +37,16 @@ internal class TJLabsDRDistanceEstimator {
     private var distance: Float = 0f
     private var preRoll: Float = 0f
     private var prePitch: Float = 0f
-    private var rflow: Float = 0f
-    private var rflowForVelocity: Float = 0f
-    private var isSufficientRfdBuffer: Boolean = false
     private var isStartRouteTrack: Boolean = false
     private var biasSmoothing = 0f
     private var isPossibleUseBias = false
 
     fun estimateDistanceInfo(time: Long, sensorData: SensorData): UnitDistance {
+//        TODO()
+//        1. rflow 를 활용한 속도 추정 및 정지 판단
+//        2. 가속도 bias 추정
+//        3. 진출입로 속도 scaling
+
         val acc = sensorData.acc
         val gyro = sensorData.gyro
         val mag = sensorData.magRaw
@@ -140,29 +141,16 @@ internal class TJLabsDRDistanceEstimator {
         } else if (velocityInput > VELOCITY_MAX) {
             velocityInput = VELOCITY_MAX
         }
-//        Log.d("VelocityCheck", "velocitySmoothing : $velocitySmoothing")
 
-//        val rflowScale: Float = calRflowVelocityScale(rflowForVelocity, isSufficientRfdVelocityBuffer)
-
-        if (!isStartRouteTrack) {
-            entranceVelocityScale = 1.0f
-        }
 
         var velocityInputScale : Float = (velocityInput*velocityScale*entranceVelocityScale).toFloat()
 
-        if (velocityInputScale < 7) { //임시
+        if (velocityInputScale < 7) {
             velocityInputScale = 0f
-//            if (isSufficientRfdBuffer && rflow < 0.5 && !isStartRouteTrack) {
-//                velocityInputScale = VELOCITY_MAX * rflowScale
-//            }
         } else if (velocityInputScale > VELOCITY_MAX) {
             velocityInputScale = VELOCITY_MAX
         }
 
-        // RFlow Stop Detection
-//        if (isSufficientRfdBuffer && rflow >= RF_SC_THRESHOLD_DR) {
-//            velocityInputScale = 0f
-//        }
 
         val delT = if (preTime == 0L) 1 / sensorFrequency.toFloat() else ((time - preTime) * 1e-3).toFloat()
 
@@ -190,8 +178,6 @@ internal class TJLabsDRDistanceEstimator {
             finalUnitResult.isIndexChanged = true
             distance = 0f
         }
-
-//        controlMovingDirectionInfoBuffer(time, index, accMovingDirection, velocityMps.toFloat())
 
         preTime = time
 
@@ -226,19 +212,5 @@ internal class TJLabsDRDistanceEstimator {
         queueCopy.add(data)
         return queueCopy
 
-    }
-
-    private fun calRflowVelocityScale(rflowForVelocity: Float, isSufficientForVelocity: Boolean) :Float {
-        var scale: Float = 1.0f
-
-        if (isSufficientForVelocity) {
-            scale = ((-1/(1+exp(10*(-rflowForVelocity+0.66)))) + 1).toFloat()
-
-            if (scale < 0.5) {
-                scale = 0.5f
-            }
-        }
-
-        return scale
     }
 }
