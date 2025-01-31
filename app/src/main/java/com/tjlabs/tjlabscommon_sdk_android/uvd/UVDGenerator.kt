@@ -94,7 +94,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
             val index = drUnit.index
             val length = drUnit.length
             val heading = attDegree.yaw
-            callback.onUvdResult(UserMode.MODE_PEDESTRIAN, UserVelocity(userId, System.currentTimeMillis(), index, length, heading, true))
+            callback.onUvdResult(UserMode.MODE_VEHICLE, UserVelocity(userId, System.currentTimeMillis(), index, length, heading, true))
             uvdGenerationTimeMillis = System.currentTimeMillis()
         } else {
             callback.onUvdPauseMillis(System.currentTimeMillis() - uvdGenerationTimeMillis)

@@ -26,10 +26,9 @@ internal class TJLabsDRDistanceEstimator {
     private var magNormSmoothingQueue: MutableList<Float> = mutableListOf()
     private var magNormVarQueue: MutableList<Float> = mutableListOf()
     private var velocityQueue: MutableList<Float> = mutableListOf()
-    private var featureExtractionCount: Float = 0f
     private var preNavGyroZSmoothing: Float = 0f
     private var preMagNormSmoothing: Float = 0f
-    private var preMagVarFeature: Float = 0f
+    private var preMagNormVarSmoothing: Float = 0f
     private var preVelocitySmoothing: Float = 0f
     private var scCompensation = 1.0f
     private var velocityScale: Float = 1.0f
@@ -42,7 +41,6 @@ internal class TJLabsDRDistanceEstimator {
     private var rflow: Float = 0f
     private var rflowForVelocity: Float = 0f
     private var isSufficientRfdBuffer: Boolean = false
-    private var isSufficientRfdVelocityBuffer: Boolean = false
     private var isStartRouteTrack: Boolean = false
     private var biasSmoothing = 0f
     private var isPossibleUseBias = false
@@ -104,19 +102,18 @@ internal class TJLabsDRDistanceEstimator {
         // ----- Mag Norm Var------ //
         val magNormVarSmoothingResult = processSmoothing(
             currentValue = magNormSmoothingVar,
-            previousSmoothedValue = preMagVarFeature,
+            previousSmoothedValue = preMagNormVarSmoothing,
             queue = magNormVarQueue,
             smoothingSize = sensorFrequency * 2,
             maxQueueSize = sensorFrequency  * 2
         )
 
         val magVarSmoothing = magNormVarSmoothingResult.first
-        preMagVarFeature = magNormSmoothingResult.first
-        magNormVarQueue = magNormSmoothingResult.second
+        preMagNormVarSmoothing = magNormVarSmoothingResult.first
+        magNormVarQueue = magNormVarSmoothingResult.second
         // --------------- //
 
         val velocityRaw = log10(magVarSmoothing+1) / log10(1.1f)
-
 
         // ----- Velocity----- //
         val velocitySmoothingResult = processSmoothing(
@@ -128,8 +125,8 @@ internal class TJLabsDRDistanceEstimator {
         )
 
         val velocitySmoothing = velocitySmoothingResult.first
-        preMagVarFeature = magNormSmoothingResult.first
-        magNormVarQueue = magNormSmoothingResult.second
+        preVelocitySmoothing = velocitySmoothingResult.first
+        velocityQueue = velocitySmoothingResult.second
 
 
         var turnScale = exp(- gyroSmoothing / 2)
@@ -143,8 +140,9 @@ internal class TJLabsDRDistanceEstimator {
         } else if (velocityInput > VELOCITY_MAX) {
             velocityInput = VELOCITY_MAX
         }
+//        Log.d("VelocityCheck", "velocitySmoothing : $velocitySmoothing")
 
-        val rflowScale: Float = calRflowVelocityScale(rflowForVelocity, isSufficientRfdVelocityBuffer)
+//        val rflowScale: Float = calRflowVelocityScale(rflowForVelocity, isSufficientRfdVelocityBuffer)
 
         if (!isStartRouteTrack) {
             entranceVelocityScale = 1.0f
@@ -154,17 +152,17 @@ internal class TJLabsDRDistanceEstimator {
 
         if (velocityInputScale < 7) { //임시
             velocityInputScale = 0f
-            if (isSufficientRfdBuffer && rflow < 0.5 && !isStartRouteTrack) {
-                velocityInputScale = VELOCITY_MAX * rflowScale
-            }
+//            if (isSufficientRfdBuffer && rflow < 0.5 && !isStartRouteTrack) {
+//                velocityInputScale = VELOCITY_MAX * rflowScale
+//            }
         } else if (velocityInputScale > VELOCITY_MAX) {
             velocityInputScale = VELOCITY_MAX
         }
 
         // RFlow Stop Detection
-        if (isSufficientRfdBuffer && rflow >= RF_SC_THRESHOLD_DR) {
-            velocityInputScale = 0f
-        }
+//        if (isSufficientRfdBuffer && rflow >= RF_SC_THRESHOLD_DR) {
+//            velocityInputScale = 0f
+//        }
 
         val delT = if (preTime == 0L) 1 / sensorFrequency.toFloat() else ((time - preTime) * 1e-3).toFloat()
 
@@ -175,14 +173,14 @@ internal class TJLabsDRDistanceEstimator {
             velocityInputScale = VELOCITY_MIN
         }
 
-        val velocityMps = (velocityInputScale/3.6)*turnScale
+        val velocityKmph = (velocityInputScale)*turnScale
 
-        val velocityCombine = (velocityMps*0.7) + (velocityAcc*0.3)
-        val velocityFinal = if (isPossibleUseBias) velocityCombine else velocityMps
+        val velocityCombine = (velocityKmph*0.7) + (velocityAcc*0.3)
+        val velocityFinal = if (isPossibleUseBias) velocityCombine else velocityKmph
 
         finalUnitResult.isIndexChanged = false
         finalUnitResult.velocity = velocityFinal.toFloat()
-        distance += (velocityMps*delT).toFloat()
+        distance += (velocityKmph*delT).toFloat()
 
         if (distance >= 1) {
             index += 1
@@ -194,7 +192,6 @@ internal class TJLabsDRDistanceEstimator {
 
 //        controlMovingDirectionInfoBuffer(time, index, accMovingDirection, velocityMps.toFloat())
 
-        featureExtractionCount += 1
         preTime = time
 
         return finalUnitResult
