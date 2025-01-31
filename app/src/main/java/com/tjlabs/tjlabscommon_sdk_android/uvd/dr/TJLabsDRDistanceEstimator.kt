@@ -173,14 +173,15 @@ internal class TJLabsDRDistanceEstimator {
             velocityInputScale = VELOCITY_MIN
         }
 
-        val velocityKmph = (velocityInputScale)*turnScale
+        val velocityMps = (velocityInputScale/3.6)*turnScale
 
-        val velocityCombine = (velocityKmph*0.7) + (velocityAcc*0.3)
-        val velocityFinal = if (isPossibleUseBias) velocityCombine else velocityKmph
+        val velocityCombine = (velocityMps*0.7) + (velocityAcc*0.3)
+        val velocityFinal = if (isPossibleUseBias) velocityCombine else velocityMps
 
         finalUnitResult.isIndexChanged = false
-        finalUnitResult.velocity = velocityFinal.toFloat()
-        distance += (velocityKmph*delT).toFloat()
+        finalUnitResult.velocity = (velocityFinal * 3.6f).toFloat()
+        distance += (velocityMps*delT).toFloat()
+
 
         if (distance >= 1) {
             index += 1
