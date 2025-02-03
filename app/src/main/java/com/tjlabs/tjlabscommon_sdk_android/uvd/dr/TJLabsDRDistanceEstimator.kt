@@ -33,7 +33,6 @@ internal class TJLabsDRDistanceEstimator {
     private var velocityScale: Float = 1.0f
     private var entranceVelocityScale: Float = 1.0f
     private var preTime: Long = 0L
-    private var velocityAcc: Float = 0f
     private var distance: Float = 0f
     private var preRoll: Float = 0f
     private var prePitch: Float = 0f
@@ -67,7 +66,6 @@ internal class TJLabsDRDistanceEstimator {
         }
 
         val accAttitude = Attitude(accRoll, accPitch, 0f)
-        val accMovingDirection = transBody2Nav(accAttitude, acc)[1]
         val gyroNavZ = abs(transBody2Nav(accAttitude, gyro)[2])
         val magNorm = l2Normalize(mag)
 
@@ -129,7 +127,6 @@ internal class TJLabsDRDistanceEstimator {
         preVelocitySmoothing = velocitySmoothingResult.first
         velocityQueue = velocitySmoothingResult.second
 
-
         var turnScale = exp(- gyroSmoothing / 2)
         if (turnScale > 0.87) {
             turnScale = 1.0f
@@ -154,22 +151,15 @@ internal class TJLabsDRDistanceEstimator {
 
         val delT = if (preTime == 0L) 1 / sensorFrequency.toFloat() else ((time - preTime) * 1e-3).toFloat()
 
-        velocityAcc += (accMovingDirection + biasSmoothing) * delT
-        velocityAcc = if (velocityAcc < 0) 0f else velocityAcc
-
         if (velocityInputScale.toInt() == 0 && isStartRouteTrack) {
             velocityInputScale = VELOCITY_MIN
         }
 
         val velocityMps = (velocityInputScale/3.6)*turnScale
 
-        val velocityCombine = (velocityMps*0.7) + (velocityAcc*0.3)
-        val velocityFinal = if (isPossibleUseBias) velocityCombine else velocityMps
-
         finalUnitResult.isIndexChanged = false
-        finalUnitResult.velocity = (velocityFinal * 3.6f).toFloat()
+        finalUnitResult.velocity = (velocityMps * 3.6f).toFloat()
         distance += (velocityMps*delT).toFloat()
-
 
         if (distance >= 1) {
             index += 1
