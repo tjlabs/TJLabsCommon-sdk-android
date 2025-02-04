@@ -51,6 +51,20 @@ object TJLabsUtilFunctions{
         return remainderHeading
     }
 
+    fun calVariance(buffer: List<Float>, bufferMean: Float): Float {
+        var bufferSum = 0.0
+        buffer.forEach { value ->
+            bufferSum += (value - bufferMean).pow(2)
+        }
+
+        if (buffer.size == 1){
+            return (bufferSum / (buffer.size)).toFloat()
+        }
+        else{
+            return (bufferSum / (buffer.size - 1)).toFloat()
+        }
+    }
+
     fun circularStandardDeviation(array: List<Float>): Float {
         if (array.isEmpty()) {
             return 20.0f
@@ -60,6 +74,16 @@ object TJLabsUtilFunctions{
         val circularDifferences = array.map { angleDifference(it, meanAngle) }
         val circularVariance = circularSumByDouble(circularDifferences) / circularDifferences.size
         return sqrt(circularVariance)
+    }
+
+    fun removeLevelDirectionString(levelName : String) : String {
+        var currentLevelName = levelName
+        if (currentLevelName.isNotEmpty()) {
+            if (currentLevelName[currentLevelName.lastIndex].toString() == "D") {
+                currentLevelName = currentLevelName.replace("_D", "")
+            }
+        }
+        return currentLevelName
     }
 
     private fun angleDifference(a1: Float, a2: Float): Float {
@@ -91,15 +115,9 @@ object TJLabsUtilFunctions{
         return if (meanAngle < 0) meanAngle + 360.0f else meanAngle
     }
 
-    fun removeLevelDirectionString(levelName : String) : String {
-        var currentLevelName = levelName
-        if (currentLevelName.isNotEmpty()) {
-            if (currentLevelName[currentLevelName.lastIndex].toString() == "D") {
-                currentLevelName = currentLevelName.replace("_D", "")
-            }
-        }
-        return currentLevelName
-    }
+
+
+
 
     internal fun movingAverage(preAvgValue: Float, curValue: Float, windowSize: Int): Float {
         val windowSizeFloat = windowSize.toFloat()
@@ -220,7 +238,7 @@ object TJLabsUtilFunctions{
         return rotationMatrix
     }
 
-    internal fun l2Normalize(originalVector: List<Float>): Float {
+    internal fun l2Normalize(originalVector: FloatArray): Float {
         val squaredVector = originalVector.map { it.pow(2) }
         return sqrt(squaredVector.sum())
     }

@@ -49,7 +49,7 @@ internal class TJLabsPDRDistanceEstimator
     }
 
     fun estimateDistanceInfo(time: Long, sensorData: SensorData): UnitDistance {
-        val accNorm = l2Normalize(sensorData.acc.toList())
+        val accNorm = l2Normalize(sensorData.acc)
         val accNormEMA = exponentialMovingAverage(preAccNormEMA, accNorm, avgNormAccWindow)
 
         preAccNormEMA = accNormEMA
