@@ -68,21 +68,21 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
+            uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
             uvdGenerator.generateUvd(maxPDRStepLength = 0.7f, callback = object : UVDGenerator.UVDCallback{
                 override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                    Log.d("UVDVelocityResult", "mode : $mode // uvd : $uvd")
+                    Log.d("UVDResult", "mode : $mode // uvd : $uvd")
                 }
 
                 override fun onPressureResult(hPa: Float) {
-                    Log.d("UVDVelocityResult", hPa.toString())
                 }
 
                 override fun onVelocityResult(kmPh: Float) {
-                    Log.d("UVDVelocityResult", kmPh.toString())
+                    Log.d("UVDVelocityResult", "kmPh : $kmPh")
+
                 }
 
                 override fun onUvdPauseMillis(time: Long) {
-                    Log.d("UVDPauseMillis", time.toString())
                 }
 
                 override fun onUvdError(error: String) {
