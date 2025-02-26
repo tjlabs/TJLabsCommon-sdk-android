@@ -299,4 +299,14 @@ object TJLabsUtilFunctions{
 
         return processedGyro
     }
+
+    fun <T> sliceArray(array: List<T>, index: Int): List<T> {
+        return if (index < 0 || index >= array.size) {
+            emptyList()
+        } else {
+            array.takeLast(array.size - index)
+        }
+    }
+
+
 }
