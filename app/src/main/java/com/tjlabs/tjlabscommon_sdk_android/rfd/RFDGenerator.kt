@@ -1,6 +1,5 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 import android.app.Application
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanFilter
 import android.content.Context
@@ -8,7 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
-import android.provider.Settings
+import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 class RFDGenerator(private val application: Application, val userId : String = "") {
@@ -16,13 +15,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
         fun onRfdResult(rfd: ReceivedForce)
 
         fun onRfdError(code : Int, msg : String)
+
+        fun onRfdEmptyMillis(time : Long)
     }
 
     private val handler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
     private var tjLabsBluetoothManager: TJLabsBluetoothManager = TJLabsBluetoothManager(application)
     private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
-
+    private var rfdGenerationTimeMillis = 0L
     init {
         setScanMode(ScanMode.ONLY_WARD_SCAN)
     }
@@ -53,7 +54,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
             handler.removeCallbacks(timerRunnable!!)
             callback.onRfdError(RFDErrorCode.DUPLICATE_SCAN_START, "duplicate scan start error")
         }
-
+        rfdGenerationTimeMillis = System.currentTimeMillis()
         timerRunnable = object : Runnable {
             override fun run() {
                 val (isCheckBleAvailable, msgCheckBleAvailable) = tjLabsBluetoothManager.checkBleAvailable()
@@ -90,6 +91,12 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                 val averageBleMap = TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
                 callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
+
+                if (averageBleMap.isEmpty()) {
+                    callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
+                } else{
+                    rfdGenerationTimeMillis = System.currentTimeMillis()
+                }
                 handler.postDelayed(this, rfdIntervalMillis)
             }
         }

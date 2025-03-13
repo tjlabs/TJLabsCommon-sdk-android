@@ -66,6 +66,10 @@ class MainActivity : AppCompatActivity() {
                 override fun onRfdError(code : Int, msg : String) {
                     Log.d("BLETimerListener", "error : $msg")
                 }
+
+                override fun onRfdEmptyMillis(time: Long) {
+                    Log.d("BLETimerListener", "time : $time")
+                }
             })
 
             uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
