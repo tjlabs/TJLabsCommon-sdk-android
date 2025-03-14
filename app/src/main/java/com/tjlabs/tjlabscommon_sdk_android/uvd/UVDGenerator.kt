@@ -38,28 +38,35 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         TODO()
     }
 
+    fun checkIsAvailableUvd(callback : UVDCallback, completion : (Boolean) -> Unit) {
+        val (isCheckSensorSuccess, msgCheckSensor) = tjLabsSensorManager.checkSensorAvailability()
+        if (isCheckSensorSuccess) {
+            completion(true)
+        } else {
+            completion(false)
+            callback.onUvdError(msgCheckSensor)
+        }
+    }
+
     fun generateUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
                     minPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMinStepLength(),
                     maxPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMaxStepLength(),
                     callback : UVDCallback) {
-        val (isCheckSensorSuccess, msgCheckSensor) = tjLabsSensorManager.checkSensorAvailability()
-        if (isCheckSensorSuccess) {
-            uvdGenerationTimeMillis = System.currentTimeMillis()
-            tjLabsPdrDistanceEstimator.setDefaultStepLength(defaultPDRStepLength)
-            tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
-            tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
-            tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
-                override fun onSensorChangedResult(sensorData: SensorData) {
-                    when (userMode) {
-                        UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(sensorData, callback)
-                        UserMode.MODE_VEHICLE -> generateVehicleUvd(sensorData, callback)
-                        UserMode.MODE_AUTO -> TODO()
-                    }
+
+        uvdGenerationTimeMillis = System.currentTimeMillis()
+        tjLabsPdrDistanceEstimator.setDefaultStepLength(defaultPDRStepLength)
+        tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
+        tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
+
+        tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
+            override fun onSensorChangedResult(sensorData: SensorData) {
+                when (userMode) {
+                    UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(sensorData, callback)
+                    UserMode.MODE_VEHICLE -> generateVehicleUvd(sensorData, callback)
+                    UserMode.MODE_AUTO -> TODO()
                 }
-            })
-        } else {
-            callback.onUvdError(msgCheckSensor)
-        }
+            }
+        })
     }
 
     private fun resetVelocityAfterSeconds(velocity : Float, sec : Int = 2) : Float {
