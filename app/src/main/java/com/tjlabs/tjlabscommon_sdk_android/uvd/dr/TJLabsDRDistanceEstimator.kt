@@ -1,5 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.dr
 
+import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calVariance
@@ -40,7 +41,7 @@ internal class TJLabsDRDistanceEstimator {
     private var biasSmoothing = 0f
     private var isPossibleUseBias = false
 
-    fun estimateDistanceInfo(time: Long, sensorData: SensorData): UnitDistance {
+    fun estimateDistanceInfo(time: Long, sensorData: SensorData): Pair<UnitDistance, Float> {
 //        TODO()
 //        1. rflow 를 활용한 속도 추정 및 정지 판단
 //        2. 가속도 bias 추정
@@ -171,7 +172,7 @@ internal class TJLabsDRDistanceEstimator {
 
         preTime = time
 
-        return finalUnitResult
+        return Pair(finalUnitResult, magNormSmoothingVar)
     }
 
     private fun processSmoothing(
