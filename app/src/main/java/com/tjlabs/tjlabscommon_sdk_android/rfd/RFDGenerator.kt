@@ -12,6 +12,8 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 class RFDGenerator(private val application: Application, val userId : String = "") {
     interface RFDCallback {
+        fun onRfdSuccess(isSuccess: Boolean)
+
         fun onRfdResult(rfd: ReceivedForce)
 
         fun onRfdError(code : Int, msg : String)
@@ -62,16 +64,19 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 val (isCheckBleActivation, msgCheckBleActivation) = tjLabsBluetoothManager.checkBleActivation()
 
                 if (!isCheckBleAvailable) {
+                    callback.onRfdSuccess(false)
                     callback.onRfdError(RFDErrorCode.BLUETOOTH_NOT_SUPPORTED, msgCheckBleAvailable)
                     return
                 }
 
                 if (!isCheckBlePermission) {
+                    callback.onRfdSuccess(false)
                     callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, msgCheckBlePermission)
                     return
                 }
 
                 if (!isCheckBleActivation) {
+                    callback.onRfdSuccess(false)
                     callback.onRfdError(RFDErrorCode.BLUETOOTH_DISABLED, msgCheckBleActivation)
                     return
                 }
@@ -80,6 +85,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
                 tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
                 tjLabsBluetoothManager.startScan()
+                callback.onRfdSuccess(true)
 
                 tjLabsBluetoothManager.getBleScanResult(object :
                     TJLabsBluetoothManager.ScanResultListener {

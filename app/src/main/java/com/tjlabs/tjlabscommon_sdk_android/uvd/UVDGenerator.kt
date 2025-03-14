@@ -9,6 +9,8 @@ const val sensorFrequency = 40
 
 class UVDGenerator(application: Application, private val userId : String = "") {
     interface UVDCallback {
+        fun onUvdSuccess(isSuccess : Boolean)
+
         fun onUvdResult(mode : UserMode, uvd: UserVelocity)
 
         fun onPressureResult(hPa : Float)
@@ -48,6 +50,8 @@ class UVDGenerator(application: Application, private val userId : String = "") {
             tjLabsPdrDistanceEstimator.setDefaultStepLength(defaultPDRStepLength)
             tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
             tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
+            callback.onUvdSuccess(true)
+
             tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
                 override fun onSensorChangedResult(sensorData: SensorData) {
                     when (userMode) {
@@ -58,6 +62,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
                 }
             })
         } else {
+            callback.onUvdSuccess(false)
             callback.onUvdError(msgCheckSensor)
         }
     }
