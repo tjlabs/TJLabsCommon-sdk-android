@@ -12,8 +12,6 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 class RFDGenerator(private val application: Application, val userId : String = "") {
     interface RFDCallback {
-        fun onRfdSuccess(isSuccess: Boolean)
-
         fun onRfdResult(rfd: ReceivedForce)
 
         fun onRfdError(code : Int, msg : String)
@@ -44,6 +42,35 @@ class RFDGenerator(private val application: Application, val userId : String = "
         tjLabsBluetoothManager.setScanFilters(scanFilters)
     }
 
+    fun checkIsAvailableRfd(callback: RFDCallback, completion : (Boolean) -> Unit) {
+        if (timerRunnable != null) {
+            handler.removeCallbacks(timerRunnable!!)
+            callback.onRfdError(RFDErrorCode.DUPLICATE_SCAN_START, "duplicate scan start error")
+        }
+
+        val (isCheckBleAvailable, msgCheckBleAvailable) = tjLabsBluetoothManager.checkBleAvailable()
+        val (isCheckBlePermission, msgCheckBlePermission) = tjLabsBluetoothManager.checkPermissions()
+        val (isCheckBleActivation, msgCheckBleActivation) = tjLabsBluetoothManager.checkBleActivation()
+
+        if (!isCheckBleAvailable) {
+            completion(false)
+            callback.onRfdError(RFDErrorCode.BLUETOOTH_NOT_SUPPORTED, msgCheckBleAvailable)
+        }
+
+        if (!isCheckBlePermission) {
+            completion(false)
+            callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, msgCheckBlePermission)
+            return
+        }
+
+        if (!isCheckBleActivation) {
+            completion(false)
+            callback.onRfdError(RFDErrorCode.BLUETOOTH_DISABLED, msgCheckBleActivation)
+            return
+        }
+        completion(true)
+    }
+
     fun generateRfd(
         rfdIntervalMillis : Long = 500,
         bleScanWindowTimeMillis : Long = 1000,
@@ -52,40 +79,13 @@ class RFDGenerator(private val application: Application, val userId : String = "
         getPressure: () -> Float = {0f},
         callback: RFDCallback
     ) {
-        if (timerRunnable != null) {
-            handler.removeCallbacks(timerRunnable!!)
-            callback.onRfdError(RFDErrorCode.DUPLICATE_SCAN_START, "duplicate scan start error")
-        }
         rfdGenerationTimeMillis = System.currentTimeMillis()
         timerRunnable = object : Runnable {
             override fun run() {
-                val (isCheckBleAvailable, msgCheckBleAvailable) = tjLabsBluetoothManager.checkBleAvailable()
-                val (isCheckBlePermission, msgCheckBlePermission) = tjLabsBluetoothManager.checkPermissions()
-                val (isCheckBleActivation, msgCheckBleActivation) = tjLabsBluetoothManager.checkBleActivation()
-
-                if (!isCheckBleAvailable) {
-                    callback.onRfdSuccess(false)
-                    callback.onRfdError(RFDErrorCode.BLUETOOTH_NOT_SUPPORTED, msgCheckBleAvailable)
-                    return
-                }
-
-                if (!isCheckBlePermission) {
-                    callback.onRfdSuccess(false)
-                    callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, msgCheckBlePermission)
-                    return
-                }
-
-                if (!isCheckBleActivation) {
-                    callback.onRfdSuccess(false)
-                    callback.onRfdError(RFDErrorCode.BLUETOOTH_DISABLED, msgCheckBleActivation)
-                    return
-                }
-
                 tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
                 tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
                 tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
                 tjLabsBluetoothManager.startScan()
-                callback.onRfdSuccess(true)
 
                 tjLabsBluetoothManager.getBleScanResult(object :
                     TJLabsBluetoothManager.ScanResultListener {
