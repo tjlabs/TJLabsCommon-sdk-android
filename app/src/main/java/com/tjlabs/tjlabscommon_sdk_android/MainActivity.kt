@@ -86,6 +86,9 @@ class MainActivity : AppCompatActivity() {
 
                 }
 
+                override fun onMagNormSmoothingVarResult(value: Float) {
+                }
+
                 override fun onUvdPauseMillis(time: Long) {
                 }
 
