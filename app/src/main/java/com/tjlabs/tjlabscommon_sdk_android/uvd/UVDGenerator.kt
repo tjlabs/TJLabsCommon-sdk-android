@@ -15,6 +15,8 @@ class UVDGenerator(application: Application, private val userId : String = "") {
 
         fun onVelocityResult(kmPh : Float)
 
+        fun onMagNormSmoothingVarResult(value : Float)
+
         fun onUvdPauseMillis(time : Long)
 
         fun onUvdError(error : String)
@@ -86,7 +88,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
     }
 
     private fun generateVehicleUvd(sensorData: SensorData, callback: UVDCallback) {
-        val drUnit = tjLabsDrDistanceEstimator.estimateDistanceInfo(System.currentTimeMillis(), sensorData)
+        val (drUnit, magNormSmoothingVariance) = tjLabsDrDistanceEstimator.estimateDistanceInfo(System.currentTimeMillis(), sensorData)
         val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(System.currentTimeMillis(), sensorData).toDegree()
         //TODO() 자석 거치 상황인지 확인
         //TODO() calAccBias?
@@ -101,6 +103,7 @@ class UVDGenerator(application: Application, private val userId : String = "") {
         }
         callback.onPressureResult(sensorData.pressure[0])
         callback.onVelocityResult(resetVelocityAfterSeconds(drUnit.velocity))
+        callback.onMagNormSmoothingVarResult(magNormSmoothingVariance)
     }
 
     private fun generateAutoUvd() {
