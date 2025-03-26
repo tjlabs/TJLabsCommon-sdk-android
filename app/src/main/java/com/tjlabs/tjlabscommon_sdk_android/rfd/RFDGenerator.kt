@@ -8,6 +8,10 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleMutableList
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleSimulationIndex
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.parseStringToMap
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 class RFDGenerator(private val application: Application, val userId : String = "") {
@@ -107,6 +111,41 @@ class RFDGenerator(private val application: Application, val userId : String = "
             }
         }
         handler.postDelayed(timerRunnable!!, rfdIntervalMillis)
+    }
+
+    fun generateSimulationRfd(
+        rfdIntervalMillis : Long = 500,
+        bleScanWindowTimeMillis : Long = 1000,
+        minRssiThreshold : Int = -100,
+        maxRssiThreshold : Int = -40,
+        getPressure: () -> Float = {0f},
+        baseFileName : String,
+        callback: RFDCallback
+    ) {
+        rfdGenerationTimeMillis = System.currentTimeMillis()
+        if (JupiterSimulator.loadBleData(application, baseFileName)) {
+            timerRunnable = object : Runnable {
+                override fun run() {
+                    val index = bleSimulationIndex % bleMutableList.size
+                    val element = bleMutableList[index]
+                    val averageBleMap = parseStringToMap(element)
+                    bleSimulationIndex++
+
+                    callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
+
+                    if (averageBleMap.isEmpty()) {
+                        callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
+                    } else {
+                        rfdGenerationTimeMillis = System.currentTimeMillis()
+                    }
+                    handler.postDelayed(this, rfdIntervalMillis)
+
+                }
+            }
+            handler.postDelayed(timerRunnable!!, rfdIntervalMillis)
+        } else {
+            callback.onRfdError(999, "Load BLE Simulation Data Error!")
+        }
     }
 
 
