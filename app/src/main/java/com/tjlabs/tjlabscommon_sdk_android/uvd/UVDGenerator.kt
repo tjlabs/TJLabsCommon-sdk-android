@@ -39,7 +39,7 @@ class UVDGenerator(private val application: Application, private val userId : St
     }
 
     fun updateDrVelocityScale(scale : Float) {
-        TODO()
+        tjLabsDrDistanceEstimator.setVelocityScale(scale)
     }
 
     fun checkIsAvailableUvd(callback : UVDCallback, completion : (Boolean) -> Unit) {
