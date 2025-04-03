@@ -1,13 +1,17 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
 import android.app.Application
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.convertToSensorData
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.sensorMutableList
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.sensorSimulationIndex
 import com.tjlabs.tjlabscommon_sdk_android.uvd.dr.TJLabsDRDistanceEstimator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
 
 
 const val sensorFrequency = 40
 
-class UVDGenerator(application: Application, private val userId : String = "") {
+class UVDGenerator(private val application: Application, private val userId : String = "") {
     interface UVDCallback {
         fun onUvdResult(mode : UserMode, uvd: UserVelocity)
 
@@ -67,6 +71,38 @@ class UVDGenerator(application: Application, private val userId : String = "") {
                 }
             }
         })
+    }
+
+    fun generateSimulationUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
+                              minPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMinStepLength(),
+                              maxPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMaxStepLength(),
+                              baseFileName : String,
+                              callback : UVDCallback) {
+
+        uvdGenerationTimeMillis = System.currentTimeMillis()
+        tjLabsPdrDistanceEstimator.setDefaultStepLength(defaultPDRStepLength)
+        tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
+        tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
+
+        if (JupiterSimulator.loadSensorData(application, baseFileName)) {
+            tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
+                override fun onSensorChangedResult(sensorData: SensorData) {
+                    val index = sensorSimulationIndex % sensorMutableList.size
+                    val element = sensorMutableList[index]
+                    val convertResult = convertToSensorData(element)
+                    val simulationSensorData = convertResult.second
+                    sensorSimulationIndex++
+
+                    when (userMode) {
+                        UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(simulationSensorData, callback)
+                        UserMode.MODE_VEHICLE -> generateVehicleUvd(simulationSensorData, callback)
+                        UserMode.MODE_AUTO -> TODO()
+                    }
+                }
+            })
+        } else {
+            callback.onUvdError("Load Sensor Simulation Data Error!")
+        }
     }
 
     private fun resetVelocityAfterSeconds(velocity : Float, sec : Int = 2) : Float {
