@@ -204,4 +204,8 @@ internal class TJLabsDRDistanceEstimator {
         return queueCopy
 
     }
+
+    fun setVelocityScale(scale : Float) {
+        velocityScale = scale
+    }
 }
