@@ -40,6 +40,13 @@ internal data class SensorData(
                 "rotVector=${rotVector.joinToString(",")}, " + "\n" +
                 "pressure=${pressure.joinToString(",")})"
     }
+
+    fun toCollectString(): String {
+        return "${acc.joinToString(",")},${gyro.joinToString(",")}" +
+                ",${magRaw.joinToString(",")},${gameVector.joinToString(",")},${rotVector.joinToString(",")}" +
+                ",${pressure[0]},0"
+
+    }
 }
 
 internal data class Attitude(
