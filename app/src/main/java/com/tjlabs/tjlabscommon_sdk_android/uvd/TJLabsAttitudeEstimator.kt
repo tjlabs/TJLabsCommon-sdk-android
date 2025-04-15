@@ -1,5 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
+import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAngleOfRotation
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAttEMA
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAttitudeUsingGameVector
@@ -9,7 +10,6 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.transBody2N
 
 
 internal class TJLabsAttitudeEstimator(private val frequency : Int) {
-    private var timeBefore: Long? = null
     private var headingGyroGame: Float = 0f
     private var headingGyroAcc: Float = 0f
     private var preGameVecAttEMA = Attitude(0f, 0f, 0f)
@@ -18,7 +18,7 @@ internal class TJLabsAttitudeEstimator(private val frequency : Int) {
     private var preAccAngleOfRotation = 0f
     private val avgAttitudeWindow = (frequency / 2)
 
-    fun estimateAttitudeRadian(time: Long, sensorData: SensorData): Attitude {
+    fun estimateAttitudeRadian(dtime : Long?, sensorData: SensorData): Attitude {
         val acc = sensorData.acc
         val gyro = sensorData.gyro
         val gameVector = sensorData.gameVector
@@ -58,9 +58,9 @@ internal class TJLabsAttitudeEstimator(private val frequency : Int) {
         val gyroNavEMAAcc = transBody2Nav(accAttEMA, gyro)
 
         // timeBefore 이 null 이면 초기화, 아니면 회전값 누적
-        timeBefore?.let {
-            var angleOfRotation = calAngleOfRotation(time - it, gyroNavGame[2])
-            var accAngleOfRotation = calAngleOfRotation(time - it, gyroNavEMAAcc[2])
+        if (dtime != null) {
+            var angleOfRotation = calAngleOfRotation(dtime, gyroNavGame[2])
+            var accAngleOfRotation = calAngleOfRotation(dtime, gyroNavEMAAcc[2])
 
             if (!angleOfRotation.isNaN() || !accAngleOfRotation.isNaN()){
                 preAngleOfRotation = angleOfRotation
@@ -71,14 +71,10 @@ internal class TJLabsAttitudeEstimator(private val frequency : Int) {
             }
             headingGyroGame += angleOfRotation
             headingGyroAcc += accAngleOfRotation
-
-        } ?: run {
+        } else {
             headingGyroGame = gyroNavGame[2] * (1 / frequency)
             headingGyroAcc = gyroNavEMAAcc[2] * (1 / frequency)
         }
-
-        timeBefore = time
-
 
         // 누적된 회전값으로 현재 attitude 계산
         val curAttitude = Attitude(gameVecAttEMA.roll, gameVecAttEMA.pitch, headingGyroGame)
@@ -93,7 +89,7 @@ internal class TJLabsAttitudeEstimator(private val frequency : Int) {
         if (!accAttEMA.isNan()){
             preAccAttEMA = accAttEMA
         }
-        timeBefore = time
+
         return curAttitude
     }
 }
