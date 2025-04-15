@@ -41,7 +41,7 @@ internal class TJLabsDRDistanceEstimator {
     private var biasSmoothing = 0f
     private var isPossibleUseBias = false
 
-    fun estimateDistanceInfo(time: Long, sensorData: SensorData): Pair<UnitDistance, Float> {
+    fun estimateDistanceInfo(dtime: Long?, sensorData: SensorData): Pair<UnitDistance, Float> {
 //        TODO()
 //        1. rflow 를 활용한 속도 추정 및 정지 판단
 //        2. 가속도 bias 추정
@@ -150,7 +150,7 @@ internal class TJLabsDRDistanceEstimator {
         }
 
 
-        val delT = if (preTime == 0L) 1 / sensorFrequency.toFloat() else ((time - preTime) * 1e-3).toFloat()
+        val delT = if (dtime == null) 1 / sensorFrequency.toFloat() else ((dtime) * 1e-3).toFloat()
 
         if (velocityInputScale.toInt() == 0 && isStartRouteTrack) {
             velocityInputScale = VELOCITY_MIN
@@ -169,8 +169,6 @@ internal class TJLabsDRDistanceEstimator {
             finalUnitResult.isIndexChanged = true
             distance = 0f
         }
-
-        preTime = time
 
         return Pair(finalUnitResult, magNormSmoothingVar)
     }
