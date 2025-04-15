@@ -58,7 +58,11 @@ class MainActivity : AppCompatActivity() {
         uvdGenerator = UVDGenerator(application, "temp")
 
         btnStart.setOnClickListener {
-            rfdGenerator.generateRfd(1000, 1000, -100, -40, getPressure = {0f}, object : RFDGenerator.RFDCallback{
+            val saveData = true
+//            val baseFileName = "aos_${region}_${sectorId}_${serviceStartTime}_${deviceModel}_${deviceOsVersion}"
+            val baseFileName = "aos_"
+
+            rfdGenerator.generateRfd(1000, 1000, -100, -40, getPressure = {0f}, isSaveData = saveData, fileName ="aos_ble", object : RFDGenerator.RFDCallback{
                 override fun onRfdResult(rfd: ReceivedForce) {
                     Log.d("BLETimerListener", "rfd : $rfd")
                 }
@@ -73,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             })
 
             uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
-            uvdGenerator.generateUvd(maxPDRStepLength = 0.7f, callback = object : UVDGenerator.UVDCallback{
+            uvdGenerator.generateUvd(maxPDRStepLength = 0.7f, isSaveData = saveData, fileName = "aos_sensor", callback = object : UVDGenerator.UVDCallback{
                 override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
                     Log.d("UVDResult", "mode : $mode // uvd : $uvd")
                 }
