@@ -121,7 +121,7 @@ internal object JupiterSimulator {
         sensorData.pressure[0] = parts[22].toFloat()
         // Azimuth
 
-        return Pair(0, sensorData)
+        return Pair(parts[0].toLong(), sensorData)
     }
 
 
@@ -148,7 +148,7 @@ internal object JupiterSimulator {
         return map
     }
 
-    private fun saveDataFunction(app : Application, saveFlag : Boolean, fileName : String, data : String){
+    fun saveDataFunction(app : Application, saveFlag : Boolean, fileName : String, data : String){
         if (saveFlag && fileName.isNotEmpty()) {
             app.openFileOutput("$fileName.csv", MODE_APPEND)
                 .bufferedWriter().use { it.append(data)
