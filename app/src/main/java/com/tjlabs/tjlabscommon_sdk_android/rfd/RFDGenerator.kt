@@ -12,6 +12,7 @@ import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleMutableList
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleSimulationIndex
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.parseStringToMap
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.saveDataFunction
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 class RFDGenerator(private val application: Application, val userId : String = "") {
@@ -81,6 +82,8 @@ class RFDGenerator(private val application: Application, val userId : String = "
         minRssiThreshold : Int = -100,
         maxRssiThreshold : Int = -40,
         getPressure: () -> Float = {0f},
+        isSaveData : Boolean = false,
+        fileName : String = "",
         callback: RFDCallback
     ) {
         rfdGenerationTimeMillis = System.currentTimeMillis()
@@ -101,6 +104,8 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                 val averageBleMap = TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
                 callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
+
+                saveDataFunction(application, isSaveData, fileName, averageBleMap.toString() + "\n")
 
                 if (averageBleMap.isEmpty()) {
                     callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
@@ -131,14 +136,17 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     val averageBleMap = parseStringToMap(element)
                     bleSimulationIndex++
 
-                    callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
+                    if (bleSimulationIndex <= bleMutableList.size) {
+                        callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
 
-                    if (averageBleMap.isEmpty()) {
-                        callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
-                    } else {
-                        rfdGenerationTimeMillis = System.currentTimeMillis()
+                        if (averageBleMap.isEmpty()) {
+                            callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
+                        } else {
+                            rfdGenerationTimeMillis = System.currentTimeMillis()
+                        }
+                        handler.postDelayed(this, rfdIntervalMillis)
                     }
-                    handler.postDelayed(this, rfdIntervalMillis)
+
 
                 }
             }

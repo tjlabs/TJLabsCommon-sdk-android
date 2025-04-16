@@ -3,6 +3,7 @@ package com.tjlabs.tjlabscommon_sdk_android.uvd
 import android.app.Application
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.convertToSensorData
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.saveDataFunction
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.sensorMutableList
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.sensorSimulationIndex
 import com.tjlabs.tjlabscommon_sdk_android.uvd.dr.TJLabsDRDistanceEstimator
@@ -34,6 +35,7 @@ class UVDGenerator(private val application: Application, private val userId : St
     private var userMode = UserMode.MODE_PEDESTRIAN
     private var drVelocityScale = 1f
 
+    private var preTime = 0L
     fun setUserMode(mode: UserMode) {
         userMode = mode
     }
@@ -55,6 +57,8 @@ class UVDGenerator(private val application: Application, private val userId : St
     fun generateUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
                     minPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMinStepLength(),
                     maxPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMaxStepLength(),
+                    isSaveData : Boolean = false,
+                    fileName : String = "",
                     callback : UVDCallback) {
 
         uvdGenerationTimeMillis = System.currentTimeMillis()
@@ -64,11 +68,16 @@ class UVDGenerator(private val application: Application, private val userId : St
 
         tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
             override fun onSensorChangedResult(sensorData: SensorData) {
+                val curTime = System.currentTimeMillis()
+                val dtime = if (preTime != 0L) {curTime - preTime} else {null}
                 when (userMode) {
-                    UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(sensorData, callback)
-                    UserMode.MODE_VEHICLE -> generateVehicleUvd(sensorData, callback)
+                    UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(curTime, dtime,sensorData, callback)
+                    UserMode.MODE_VEHICLE -> generateVehicleUvd(curTime, dtime,sensorData, callback)
                     UserMode.MODE_AUTO -> TODO()
                 }
+
+                saveDataFunction(application, isSaveData, fileName, "${curTime},${sensorData.toCollectString()}" + "\n")
+                preTime = curTime
             }
         })
     }
@@ -91,13 +100,22 @@ class UVDGenerator(private val application: Application, private val userId : St
                     val element = sensorMutableList[index]
                     val convertResult = convertToSensorData(element)
                     val simulationSensorData = convertResult.second
+                    val simulationTime = convertResult.first
                     sensorSimulationIndex++
 
-                    when (userMode) {
-                        UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(simulationSensorData, callback)
-                        UserMode.MODE_VEHICLE -> generateVehicleUvd(simulationSensorData, callback)
-                        UserMode.MODE_AUTO -> TODO()
+                    val curTime = System.currentTimeMillis()
+                    val dtime = if (preTime != 0L) {simulationTime - preTime} else {null}
+                    if (sensorSimulationIndex <= sensorMutableList.size) {
+                        when (userMode) {
+                            UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(curTime, dtime,simulationSensorData, callback)
+                            UserMode.MODE_VEHICLE -> generateVehicleUvd(curTime, dtime,simulationSensorData, callback)
+                            UserMode.MODE_AUTO -> TODO()
+                        }
+                    }else{
+                        stopUvdGeneration()
                     }
+                    preTime = simulationTime //시뮬레이션 동작 중일때는 시뮬레이션 시간기준으로 dTime 계산하기
+
                 }
             })
         } else {
@@ -113,36 +131,36 @@ class UVDGenerator(private val application: Application, private val userId : St
         }
     }
 
-    private fun generatePedestrianUvd(sensorData: SensorData, callback: UVDCallback) {
-        val pdrUnit = tjLabsPdrDistanceEstimator.estimateDistanceInfo(System.currentTimeMillis(), sensorData)
-        val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(System.currentTimeMillis(), sensorData).toDegree()
+    private fun generatePedestrianUvd(time : Long, dtime : Long?, sensorData: SensorData, callback: UVDCallback) {
+        val pdrUnit = tjLabsPdrDistanceEstimator.estimateDistanceInfo(time, sensorData)
+        val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(dtime, sensorData).toDegree()
         val isLookingStatus = tjLabsUnitStatusEstimator.estimateStatus(attDegree, pdrUnit.isIndexChanged)
         if (pdrUnit.isIndexChanged) {
             val index = pdrUnit.index
             val length = pdrUnit.length
             val heading = attDegree.yaw
-            callback.onUvdResult(UserMode.MODE_PEDESTRIAN, UserVelocity(userId, System.currentTimeMillis(), index, length, heading, isLookingStatus))
-            uvdGenerationTimeMillis = System.currentTimeMillis()
+            callback.onUvdResult(UserMode.MODE_PEDESTRIAN, UserVelocity(userId, time, index, length, heading, isLookingStatus))
+            uvdGenerationTimeMillis = time
         } else {
-            callback.onUvdPauseMillis(System.currentTimeMillis() - uvdGenerationTimeMillis)
+            callback.onUvdPauseMillis(time - uvdGenerationTimeMillis)
         }
         callback.onPressureResult(sensorData.pressure[0])
         callback.onVelocityResult(resetVelocityAfterSeconds(pdrUnit.velocity))
     }
 
-    private fun generateVehicleUvd(sensorData: SensorData, callback: UVDCallback) {
-        val (drUnit, magNormSmoothingVariance) = tjLabsDrDistanceEstimator.estimateDistanceInfo(System.currentTimeMillis(), sensorData)
-        val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(System.currentTimeMillis(), sensorData).toDegree()
+    private fun generateVehicleUvd(time : Long, dtime : Long?, sensorData: SensorData, callback: UVDCallback) {
+        val (drUnit, magNormSmoothingVariance) = tjLabsDrDistanceEstimator.estimateDistanceInfo(dtime, sensorData)
+        val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(dtime, sensorData).toDegree()
         //TODO() 자석 거치 상황인지 확인
         //TODO() calAccBias?
         if (drUnit.isIndexChanged) {
             val index = drUnit.index
             val length = drUnit.length
             val heading = attDegree.yaw
-            callback.onUvdResult(UserMode.MODE_VEHICLE, UserVelocity(userId, System.currentTimeMillis(), index, length, heading, true))
-            uvdGenerationTimeMillis = System.currentTimeMillis()
+            callback.onUvdResult(UserMode.MODE_VEHICLE, UserVelocity(userId, time, index, length, heading, true))
+            uvdGenerationTimeMillis = time
         } else {
-            callback.onUvdPauseMillis(System.currentTimeMillis() - uvdGenerationTimeMillis)
+            callback.onUvdPauseMillis(time - uvdGenerationTimeMillis)
         }
         callback.onPressureResult(sensorData.pressure[0])
         callback.onVelocityResult(resetVelocityAfterSeconds(drUnit.velocity))
