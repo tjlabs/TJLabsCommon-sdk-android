@@ -6,9 +6,9 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.Handler
-import android.os.Looper
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
+import java.util.Timer
+import java.util.TimerTask
 
 
 internal class TJLabsSensorManager(private val context : Context, private val frequency : Int): SensorEventListener {
@@ -21,8 +21,7 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
     }
 
     private var sensorData = SensorData()
-    private val handler = Handler(Looper.getMainLooper())
-    private var timerRunnable: Runnable? = null
+    private var sensorTimer: Timer? = null
     private var isRunning = false
 
     init {
@@ -115,21 +114,25 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
         }
     }
 
-    fun getSensorDataResultOrNull(callback : SensorResultListener) {
+    fun getSensorDataResultOrNull(callback: SensorResultListener) {
         isRunning = true
         initSensorManager()
 
-        val runnable = object : Runnable {
-            override fun run() {
-                if (!isRunning) return
-                callback.onSensorChangedResult(sensorData)
-                handler.postDelayed(this, TJLabsUtilFunctions.frequency2Millis(frequency).toLong())
-            }
-        }
+        val intervalMillis = TJLabsUtilFunctions.frequency2Millis(frequency).toLong()
+        val timer = Timer()
+        sensorTimer = timer
 
-        timerRunnable = runnable
-        handler.postDelayed(runnable, TJLabsUtilFunctions.frequency2Millis(frequency).toLong())
+        timer.schedule(object : TimerTask() {
+            override fun run() {
+                if (!isRunning) {
+                    timer.cancel()
+                    return
+                }
+                callback.onSensorChangedResult(sensorData)
+            }
+        }, 0, intervalMillis)
     }
+
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
 
@@ -142,10 +145,8 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
         sensorData = SensorData()
         // 실행 중이 아니면 무시
         isRunning = false
-        timerRunnable?.let { runnable ->
-            handler.removeCallbacks(runnable)
-        }
-        timerRunnable = null
+        sensorTimer?.cancel()
+        sensorTimer = null
         return Pair(true, "Success Stop Sensor Changed")
     }
 
