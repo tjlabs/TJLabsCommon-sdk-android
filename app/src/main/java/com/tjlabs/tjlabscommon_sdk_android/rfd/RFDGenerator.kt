@@ -14,6 +14,8 @@ import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleSimula
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.parseStringToMap
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.saveDataFunction
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
+import java.util.Timer
+import java.util.TimerTask
 
 class RFDGenerator(private val application: Application, val userId : String = "") {
     interface RFDCallback {
@@ -24,11 +26,11 @@ class RFDGenerator(private val application: Application, val userId : String = "
         fun onRfdEmptyMillis(time : Long)
     }
 
-    private val handler = Handler(Looper.getMainLooper())
-    private var timerRunnable: Runnable? = null
     private var tjLabsBluetoothManager: TJLabsBluetoothManager = TJLabsBluetoothManager(application)
     private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
     private var rfdGenerationTimeMillis = 0L
+    private var rfdTimer: Timer? = null
+
     init {
         setScanMode(ScanMode.ONLY_WARD_SCAN)
     }
@@ -48,8 +50,9 @@ class RFDGenerator(private val application: Application, val userId : String = "
     }
 
     fun checkIsAvailableRfd(callback: RFDCallback, completion : (Boolean) -> Unit) {
-        if (timerRunnable != null) {
-            handler.removeCallbacks(timerRunnable!!)
+        if (rfdTimer != null) {
+            rfdTimer?.cancel()
+            rfdTimer = null
             callback.onRfdError(RFDErrorCode.DUPLICATE_SCAN_START, "duplicate scan start error")
         }
 
@@ -87,7 +90,10 @@ class RFDGenerator(private val application: Application, val userId : String = "
         callback: RFDCallback
     ) {
         rfdGenerationTimeMillis = System.currentTimeMillis()
-        timerRunnable = object : Runnable {
+        val timer = Timer()
+        rfdTimer = timer
+
+        timer.schedule(object : TimerTask() {
             override fun run() {
                 tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
                 tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
@@ -112,57 +118,63 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 } else{
                     rfdGenerationTimeMillis = System.currentTimeMillis()
                 }
-                handler.postDelayed(this, rfdIntervalMillis)
             }
-        }
-        handler.postDelayed(timerRunnable!!, rfdIntervalMillis)
-    }
+        }, 0, rfdIntervalMillis)
+}
 
     fun generateSimulationRfd(
-        rfdIntervalMillis : Long = 500,
-        bleScanWindowTimeMillis : Long = 1000,
-        minRssiThreshold : Int = -100,
-        maxRssiThreshold : Int = -40,
-        getPressure: () -> Float = {0f},
-        baseFileName : String,
+        rfdIntervalMillis: Long = 500,
+        bleScanWindowTimeMillis: Long = 1000,
+        minRssiThreshold: Int = -100,
+        maxRssiThreshold: Int = -40,
+        getPressure: () -> Float = { 0f },
+        baseFileName: String,
         callback: RFDCallback
     ) {
         rfdGenerationTimeMillis = System.currentTimeMillis()
-        if (JupiterSimulator.loadBleData(application, baseFileName)) {
-            timerRunnable = object : Runnable {
-                override fun run() {
-                    val index = bleSimulationIndex % bleMutableList.size
-                    val element = bleMutableList[index]
-                    val averageBleMap = parseStringToMap(element)
-                    bleSimulationIndex++
 
-                    if (bleSimulationIndex <= bleMutableList.size) {
-                        callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
+        if (JupiterSimulator.loadBleData(application, baseFileName)) {
+            bleSimulationIndex = 0 // index 초기화
+
+            val timer = Timer()
+            rfdTimer = timer
+
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    if (bleSimulationIndex < bleMutableList.size) {
+                        Log.d("CheckFileData", "rfd change")
+                        val index = bleSimulationIndex % bleMutableList.size
+                        val element = bleMutableList[index]
+                        val averageBleMap = parseStringToMap(element)
+                        bleSimulationIndex++
+
+                        callback.onRfdResult(
+                            ReceivedForce(
+                                userId,
+                                System.currentTimeMillis() - (bleScanWindowTimeMillis / 2),
+                                averageBleMap,
+                                getPressure()
+                            )
+                        )
 
                         if (averageBleMap.isEmpty()) {
                             callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
                         } else {
                             rfdGenerationTimeMillis = System.currentTimeMillis()
                         }
-                        handler.postDelayed(this, rfdIntervalMillis)
+                    } else {
+                        timer.cancel()
                     }
-
-
                 }
-            }
-            handler.postDelayed(timerRunnable!!, rfdIntervalMillis)
+            }, 0, rfdIntervalMillis)
         } else {
             callback.onRfdError(999, "Load BLE Simulation Data Error!")
         }
     }
 
-
     fun stopRfdGeneration() {
-        timerRunnable?.let {
-            handler.removeCallbacks(it)
-            timerRunnable = null
-        }
-
+        rfdTimer?.cancel()
+        rfdTimer = null
         tjLabsBluetoothManager.stopScan()
         // TODO() stopScan 리턴 활용하기
         bleScanInfoSet.clear()
