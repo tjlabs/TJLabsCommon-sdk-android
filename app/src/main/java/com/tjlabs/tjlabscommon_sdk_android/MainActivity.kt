@@ -52,11 +52,52 @@ class MainActivity : AppCompatActivity() {
 
         val btnStart = findViewById<Button>(R.id.btnStart)
         val btnStop = findViewById<Button>(R.id.btnStop)
-
+        val btnStartSimul = findViewById<Button>(R.id.btnStartSimul)
 
         rfdGenerator = RFDGenerator(application, "temp")
         uvdGenerator = UVDGenerator(application, "temp")
 
+        btnStartSimul.setOnClickListener {
+            Log.d("CheckData", "start")
+
+            val baseFileName = "flip3_t5_6_1"
+            rfdGenerator.generateSimulationRfd(500L, 1000L, -100,
+                -40, getPressure = { 0f }, baseFileName, object : RFDGenerator.RFDCallback{
+                    override fun onRfdResult(rfd: ReceivedForce) {
+                        Log.d("CheckData", "rfd : $rfd")
+                    }
+
+                    override fun onRfdError(code: Int, msg: String) {
+                    }
+
+                    override fun onRfdEmptyMillis(time: Long) {
+                    }
+
+                })
+            uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
+            uvdGenerator.generateSimulationUvd(maxPDRStepLength = 0.7f, baseFileName = baseFileName, callback = object : UVDGenerator.UVDCallback{
+                override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
+                    Log.d("CheckData", "mode : $mode // uvd : $uvd")
+                }
+
+                override fun onPressureResult(hPa: Float) {
+                }
+
+                override fun onVelocityResult(kmPh: Float) {
+                }
+
+                override fun onMagNormSmoothingVarResult(value: Float) {
+                }
+
+                override fun onUvdPauseMillis(time: Long) {
+                }
+
+                override fun onUvdError(error: String) {
+                }
+
+            })
+
+        }
         btnStart.setOnClickListener {
             val saveData = true
 //            val baseFileName = "aos_${region}_${sectorId}_${serviceStartTime}_${deviceModel}_${deviceOsVersion}"
