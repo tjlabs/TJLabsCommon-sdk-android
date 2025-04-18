@@ -117,6 +117,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
                 } else{
                     rfdGenerationTimeMillis = System.currentTimeMillis()
+                    callback.onRfdEmptyMillis(0)
                 }
             }
         }, 0, rfdIntervalMillis)
@@ -161,6 +162,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                             callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
                         } else {
                             rfdGenerationTimeMillis = System.currentTimeMillis()
+                            callback.onRfdEmptyMillis(0)
                         }
                     } else {
                         timer.cancel()
