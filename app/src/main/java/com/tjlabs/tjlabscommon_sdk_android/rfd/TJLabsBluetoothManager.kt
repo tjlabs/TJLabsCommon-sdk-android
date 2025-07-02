@@ -168,11 +168,13 @@ internal class TJLabsBluetoothManager(private val context: Context) {
                 bleScanInfoSet = TJLabsBluetoothFunctions.removeBleScanInfoSetOlderThan(bleScanInfoSet,
                     SystemClock.elapsedRealtimeNanos() - bleScanInfoSetTimeLimitNanos)
                 callback.onScanBleSetResultOrNull(bleScanInfoSet)
-                handler.postDelayed(this, TJLabsUtilFunctions.nanos2millis(bleScanInfoSetTimeLimitNanos))
+                handler.postDelayed(this, 200) // 0.2초 마다 검사
             }
         }
         timerRunnable = runnable
-        handler.postDelayed(runnable, TJLabsUtilFunctions.nanos2millis(bleScanInfoSetTimeLimitNanos))
+//        handler.postDelayed(runnable, TJLabsUtilFunctions.nanos2millis(bleScanInfoSetTimeLimitNanos))
+        handler.postDelayed(runnable, 0) //시작 딜레이 없음
+
     }
 
     inner class ScanCallbackClass : ScanCallback() {

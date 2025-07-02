@@ -3,28 +3,39 @@ package com.tjlabs.tjlabscommon_sdk_android.rfd
 import android.util.Log
 
 internal object TJLabsBluetoothFunctions {
-     fun removeBleScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
+    fun removeBleScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
         val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
         bleScanInfoSetCopy.removeAll { it.timestampNanos < elapsedRealtimeNano }
         return bleScanInfoSetCopy
     }
 
-    fun averageBleScanInfoSet(bleScanInfoSet: MutableSet<BLEScanInfo>) : Map<String, Float> {
-        var averageMap = mapOf<String,Float>()
+    fun averageBleScanInfoSet(bleScanInfoSet: MutableSet<BLEScanInfo>): Map<String, Float> {
+        var averageMap = mapOf<String, Float>()
+
         try {
-            val bleScanInfoSetCopy = bleScanInfoSet.toHashSet()
+            val bleScanInfoSetCopy: Set<BLEScanInfo>
+            synchronized(bleScanInfoSet) {
+                bleScanInfoSetCopy = bleScanInfoSet.toSet() // 안전하게 복사
+            }
+
             val beaconInfoGroupedById = bleScanInfoSetCopy.groupBy { it.id }
-            val rssiClassMap = beaconInfoGroupedById.map {
-                it.key to RSSIClass(
-                    count = it.value.count(),
-                    total = it.value.sumOf { beaconInfoListOfId -> beaconInfoListOfId.rssi }
+
+            val rssiClassMap = beaconInfoGroupedById.map { (id, infoList) ->
+                val count = infoList.size
+                val total = infoList.sumOf { it.rssi }
+                val average = if (count > 0) total.toFloat() / count else 0f
+                Log.d(
+                    "TJLabsBluetoothFunctions",
+                    "BLE ID: $id | count: $count | total RSSI: $total | average RSSI: $average | rssi list : ${infoList.map { it.rssi }}"
                 )
+
+                id to RSSIClass(count = count, total = total)
             }.toMap()
-            val log = "_"
-            rssiClassMap.map { log + "\n${it.key} // cnt : ${it.value.count} // mean : ${it.value.count / it.value.total}" }
-            averageMap = rssiClassMap.map { it.key to (it.value.getAverage()).toFloat()}.toMap()
+
+            averageMap = rssiClassMap.map { it.key to (it.value.getAverage()).toFloat() }.toMap()
+
         } catch (e: Exception) {
-            Log.e("TJLabsBluetoothFunctions", "error, average BLE Scan Info")
+            Log.e("TJLabsBluetoothFunctions", "error, average BLE Scan Info", e)
         }
 
         return averageMap

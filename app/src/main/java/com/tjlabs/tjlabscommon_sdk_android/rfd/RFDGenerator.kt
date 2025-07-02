@@ -93,6 +93,13 @@ class RFDGenerator(private val application: Application, val userId : String = "
         val timer = Timer()
         rfdTimer = timer
 
+        tjLabsBluetoothManager.getBleScanResult(object :
+            TJLabsBluetoothManager.ScanResultListener {
+            override fun onScanBleSetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
+                this@RFDGenerator.bleScanInfoSet = bleScanInfoSet
+            }
+        })
+
         timer.schedule(object : TimerTask() {
             override fun run() {
                 tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
@@ -100,18 +107,9 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
                 tjLabsBluetoothManager.startScan()
 
-                tjLabsBluetoothManager.getBleScanResult(object :
-                    TJLabsBluetoothManager.ScanResultListener {
-                    override fun onScanBleSetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
-                        this@RFDGenerator.bleScanInfoSet = bleScanInfoSet
-                    }
-                })
-
                 val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
-                val averageBleMap = TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
+                val averageBleMap =  TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
                 callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
-
-                saveDataFunction(application, isSaveData, fileName, averageBleMap.toString() + "\n")
 
                 if (averageBleMap.isEmpty()) {
                     callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
@@ -121,7 +119,8 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 }
             }
         }, 0, rfdIntervalMillis)
-}
+    }
+
 
     fun generateSimulationRfd(
         rfdIntervalMillis: Long = 500,
