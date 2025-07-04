@@ -9,7 +9,7 @@ plugins {
 
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 0
+val versionPatch = 1
 
 
 android {
@@ -27,11 +27,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    libraryVariants.all {
-        outputs.all {
-            (this as BaseVariantOutputImpl).outputFileName = "app-release-common.aar"
-        }
-    }
+//    libraryVariants.all {
+//        outputs.all {
+//            (this as BaseVariantOutputImpl).outputFileName = "app-release-common.aar"
+//        }
+//    }
 
     buildTypes {
         release {
