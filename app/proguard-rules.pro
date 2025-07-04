@@ -19,3 +19,13 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# 기본 보호
+-dontwarn javax.annotation.**
+-dontwarn kotlin.**
+-dontnote kotlin.**
+
+# 필요한 클래스만 유지
+-keep public class com.tjlabs.** {
+    public *;
+}
+-keep class androidx.** { *; }

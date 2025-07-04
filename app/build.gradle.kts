@@ -7,6 +7,11 @@ plugins {
     id("maven-publish")
 }
 
+val versionMajor = 1
+val versionMinor = 0
+val versionPatch = 0
+
+
 android {
     namespace = "com.tjlabs.tjlabscommon_sdk_android"
     compileSdk = 34
@@ -30,7 +35,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -43,6 +48,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+
+    buildFeatures {
+        buildConfig = true // 중요
     }
 }
 
@@ -60,4 +69,17 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core.v340)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.github.tjlabs"
+                artifactId = "TJLabsCommon-sdk-android"
+                version = "$versionMajor.$versionMinor.$versionPatch"
+            }
+        }
+    }
 }
