@@ -49,7 +49,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
         tjLabsBluetoothManager.setScanFilters(scanFilters)
     }
 
-    fun checkIsAvailableRfd(callback: RFDCallback, completion : (Boolean) -> Unit) {
+    fun checkIsAvailableRfd(callback: RFDCallback, completion : (Boolean, String) -> Unit) {
         if (rfdTimer != null) {
             rfdTimer?.cancel()
             rfdTimer = null
@@ -61,22 +61,23 @@ class RFDGenerator(private val application: Application, val userId : String = "
         val (isCheckBleActivation, msgCheckBleActivation) = tjLabsBluetoothManager.checkBleActivation()
 
         if (!isCheckBleAvailable) {
-            completion(false)
+            completion(false, msgCheckBleAvailable)
             callback.onRfdError(RFDErrorCode.BLUETOOTH_NOT_SUPPORTED, msgCheckBleAvailable)
         }
 
         if (!isCheckBlePermission) {
-            completion(false)
+            completion(false, msgCheckBlePermission)
             callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, msgCheckBlePermission)
             return
         }
 
         if (!isCheckBleActivation) {
-            completion(false)
+            completion(false, msgCheckBleActivation)
             callback.onRfdError(RFDErrorCode.BLUETOOTH_DISABLED, msgCheckBleActivation)
             return
         }
-        completion(true)
+
+        completion(true, "RFD check passed. All conditions met.")
     }
 
     fun generateRfd(
