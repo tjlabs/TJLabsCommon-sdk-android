@@ -44,12 +44,12 @@ class UVDGenerator(private val application: Application, private val userId : St
         tjLabsDrDistanceEstimator.setVelocityScale(scale)
     }
 
-    fun checkIsAvailableUvd(callback : UVDCallback, completion : (Boolean) -> Unit) {
+    fun checkIsAvailableUvd(callback : UVDCallback, completion : (Boolean, String) -> Unit) {
         val (isCheckSensorSuccess, msgCheckSensor) = tjLabsSensorManager.checkSensorAvailability()
         if (isCheckSensorSuccess) {
-            completion(true)
+            completion(true, msgCheckSensor)
         } else {
-            completion(false)
+            completion(false, msgCheckSensor)
             callback.onUvdError(msgCheckSensor)
         }
     }

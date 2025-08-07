@@ -45,7 +45,7 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
             sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_GAME)
     }
 
-    fun checkSensorAvailability() : Pair<Boolean, String> {
+    fun checkSensorAvailability(): Pair<Boolean, String> {
         val accCheck = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         val gyroCheck = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         val magUnCaliCheck = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)
@@ -53,35 +53,27 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
         val pressureCheck = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
         val rotationVectorCheck = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val gameRotationVectorCheck = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
-        var errorMsg = ""
-        if (accCheck == null) {
-            errorMsg += "acc"
-        }
-        if (gyroCheck == null) {
-            errorMsg += ",gyro"
-        }
-        if (magUnCaliCheck == null) {
-            errorMsg += ",unCali mag"
-        }
-        if (magCheck == null) {
-            errorMsg += ",mag"
-        }
-        if (pressureCheck == null) {
-            errorMsg += ",pressure"
-        }
-        if (rotationVectorCheck == null) {
-            errorMsg += ",rotation vector"
-        }
-        if (gameRotationVectorCheck == null) {
-            errorMsg += ",game rotation vector"
+
+        val missingSensors = mutableListOf<String>()
+
+        if (accCheck == null) missingSensors.add("Accelerometer")
+        if (gyroCheck == null) missingSensors.add("Gyroscope")
+        if (magUnCaliCheck == null) missingSensors.add("Uncalibrated Magnetometer")
+        if (magCheck == null) missingSensors.add("Magnetometer")
+        if (rotationVectorCheck == null) missingSensors.add("Rotation Vector")
+        if (gameRotationVectorCheck == null) missingSensors.add("Game Rotation Vector")
+
+        val pressureStatus = if (pressureCheck != null) "Pressure sensor is available." else "Pressure sensor is NOT available."
+
+        val isAllAvailable = missingSensors.isEmpty()
+
+        val resultMessage = if (isAllAvailable) {
+            "All required sensors are available. [$pressureStatus]"
+        } else {
+            "Some sensors are missing: ${missingSensors.joinToString(", ")} [$pressureStatus]"
         }
 
-        return if (accCheck != null && gyroCheck != null && magUnCaliCheck != null && magCheck != null &&
-            pressureCheck != null && rotationVectorCheck != null && gameRotationVectorCheck != null){
-            Pair(true, "Sensor is available")
-        }else{
-            Pair(false, "Sensor is not available")
-        }
+        return Pair(isAllAvailable, resultMessage)
     }
 
     override fun onSensorChanged(event: SensorEvent?) {

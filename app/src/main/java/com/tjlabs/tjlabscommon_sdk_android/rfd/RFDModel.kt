@@ -1,9 +1,9 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
 data class ReceivedForce(
-    val user_id: String = "",
+    val tenant_user_name: String = "",
     val mobile_time: Long = 0L,
-    val ble: Map<String, Float> = mutableMapOf("temp" to -100f),
+    val rfs: Map<String, Float> = mutableMapOf("temp" to -100f),
     val pressure: Float = 0f
 )
 

@@ -3,7 +3,7 @@ package com.tjlabs.tjlabscommon_sdk_android.uvd
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 data class UserVelocity(
-    val user_id: String = "",
+    val tenant_user_name: String = "",
     val mobile_time: Long = 0L,
     val index: Int = 0,
     val length: Float = 0f,
