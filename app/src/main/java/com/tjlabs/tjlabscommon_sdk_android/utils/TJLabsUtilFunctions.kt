@@ -309,4 +309,11 @@ object TJLabsUtilFunctions{
     }
 
 
+    fun <T> List<T>.safeSnapshot(): List<T> {
+        synchronized(this) {
+            val snapshot = this.toList()
+            return snapshot
+        }
+    }
+
 }
