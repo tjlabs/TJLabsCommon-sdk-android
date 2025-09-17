@@ -18,8 +18,8 @@ data class UnitDistance(
     var isIndexChanged: Boolean = false
 )
 
-enum class UserMode{
-    MODE_PEDESTRIAN, MODE_VEHICLE, MODE_AUTO
+enum class UserMode(val value : String){
+    MODE_PEDESTRIAN("PDR"), MODE_VEHICLE("DR"), MODE_AUTO("AUTO")
 }
 
 internal data class SensorData(
