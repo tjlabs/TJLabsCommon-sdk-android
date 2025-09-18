@@ -25,7 +25,5 @@
 -dontnote kotlin.**
 
 # 필요한 클래스만 유지
--keep public class com.tjlabs.** {
-    public *;
-}
--keep class androidx.** { *; }
+-repackageclasses com.tjlabs.tjlabscommon.obf
+-keep class com.tjlabs.tjlabscommon_sdk_android.** { *; }
