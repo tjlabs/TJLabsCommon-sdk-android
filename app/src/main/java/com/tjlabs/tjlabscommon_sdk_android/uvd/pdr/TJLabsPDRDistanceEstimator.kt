@@ -92,14 +92,14 @@ internal class TJLabsPDRDistanceEstimator
                 if (isModeDrToPdr) {
                     // DR -> PDR 했으면
                     // 기존 값 사용
-                    isNormalStep = isNormalStep(normalStepCheckCount, NORMAL_STEP_COUNT_SET)
+                    isNormalStep = checkNormalStep(normalStepCheckCount, NORMAL_STEP_COUNT_SET)
                 } else {
                     // PDR -> DR 했으면
                     // normal step 잘 안되게? 값을 크게함
-                    isNormalStep = isNormalStep(normalStepCheckCount, MODE_AUTO_NORMAL_STEP_COUNT_SET)
+                    isNormalStep = checkNormalStep(normalStepCheckCount, MODE_AUTO_NORMAL_STEP_COUNT_SET)
                 }
             } else {
-                isNormalStep = isNormalStep(normalStepCheckCount, NORMAL_STEP_COUNT_SET)
+                isNormalStep = checkNormalStep(normalStepCheckCount, NORMAL_STEP_COUNT_SET)
             }
 
             // normal step 이 판단된다 -> step loss 가 없다.
@@ -185,7 +185,7 @@ internal class TJLabsPDRDistanceEstimator
         return 1
     }
 
-    private fun isNormalStep(normalStepCount: Int, normalStepCountSet: Int = NORMAL_STEP_COUNT_SET): Boolean {
+    private fun checkNormalStep(normalStepCount: Int, normalStepCountSet: Int = NORMAL_STEP_COUNT_SET): Boolean {
         Log.d("CheckNormalStep", "normalStepCount : $normalStepCount // normalStepCountSet : $normalStepCountSet")
         return normalStepCount >= normalStepCountSet
     }

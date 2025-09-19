@@ -1,7 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
 import android.app.Application
-import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.convertToSensorData
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.saveDataFunction
@@ -39,7 +38,7 @@ class UVDGenerator(private val application: Application, private val userId : St
 
     private var uvdGenerationTimeMillis = 0L
 
-    private var setUserMode = UserMode.MODE_PEDESTRIAN // UVD Generator 동작을 위한 설정
+    private var generatorUserMode = UserMode.MODE_PEDESTRIAN // UVD Generator 동작을 위한 설정
     private var currentUserMode = UserMode.MODE_VEHICLE // AutoMode 동작 내 판단을 위한 설정
     private var preUserMode = UserMode.MODE_VEHICLE
     private var drVelocityScale = 1f
@@ -101,7 +100,7 @@ class UVDGenerator(private val application: Application, private val userId : St
     }
 
     fun setUserMode(mode: UserMode) {
-        setUserMode = mode
+        generatorUserMode = mode
     }
 
     fun updateDrVelocityScale(scale : Float) {
@@ -134,7 +133,7 @@ class UVDGenerator(private val application: Application, private val userId : St
             override fun onSensorChangedResult(sensorData: SensorData) {
                 val curTime = System.currentTimeMillis()
                 val dtime = if (preTime != 0L) {curTime - preTime} else {null}
-                when (setUserMode) {
+                when (generatorUserMode) {
                     UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(curTime, dtime,sensorData, callback)
                     UserMode.MODE_VEHICLE -> generateVehicleUvd(curTime, dtime,sensorData, callback)
                     UserMode.MODE_AUTO -> generateAutoUvd(curTime, dtime, sensorData, callback)
@@ -170,7 +169,7 @@ class UVDGenerator(private val application: Application, private val userId : St
                     val curTime = System.currentTimeMillis()
                     val dtime = if (preTime != 0L) {simulationTime - preTime} else {null}
                     if (sensorSimulationIndex <= sensorMutableList.size) {
-                        when (setUserMode) {
+                        when (generatorUserMode) {
                             UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(curTime, dtime,simulationSensorData, callback)
                             UserMode.MODE_VEHICLE -> generateVehicleUvd(curTime, dtime,simulationSensorData, callback)
                             UserMode.MODE_AUTO -> generateAutoUvd(curTime, dtime, simulationSensorData, callback)
