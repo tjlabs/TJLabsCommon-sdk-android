@@ -1,6 +1,5 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.dr
 
-import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calVariance
@@ -41,11 +40,17 @@ internal class TJLabsDRDistanceEstimator {
     private var biasSmoothing = 0f
     private var isPossibleUseBias = false
 
+    private var rflow: Float = 0f
+    private var rflowForVelocity: Float = 0f
+    private var rflowForAutoMode: Float = 0f
+    private var isSufficientRfdBuffer: Boolean = false
+    private var isSufficientRfdVelocityBuffer: Boolean = false
+    private var isSufficientRfdAutoModeBuffer: Boolean = false
+
     fun estimateDistanceInfo(dtime: Long?, sensorData: SensorData): Pair<UnitDistance, Float> {
 //        TODO()
 //        1. rflow 를 활용한 속도 추정 및 정지 판단
 //        2. 가속도 bias 추정
-//        3. 진출입로 속도 scaling
 
         val acc = sensorData.acc
         val gyro = sensorData.gyro
@@ -206,4 +211,15 @@ internal class TJLabsDRDistanceEstimator {
     fun setVelocityScale(scale : Float) {
         velocityScale = scale
     }
+
+    fun setRFlow(rflow: Float, rflowForVelocity: Float, rflowForAutoMode: Float, isSufficient: Boolean, isSufficientForVelocity: Boolean, isSufficientForAutoMode: Boolean) {
+        this.rflow = rflow
+        this.rflowForVelocity = rflowForVelocity
+        this.rflowForAutoMode = rflowForAutoMode
+
+        isSufficientRfdBuffer = isSufficient
+        isSufficientRfdVelocityBuffer = isSufficientForVelocity
+        isSufficientRfdAutoModeBuffer = isSufficientForAutoMode
+    }
+
 }
