@@ -80,6 +80,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
         completion(true, "RFD check passed. All conditions met.")
     }
 
+    fun isBleScanAvailable() : Boolean {
+        val (isCheckBleAvailable, _) = tjLabsBluetoothManager.checkBleAvailable()
+        val (isCheckBlePermission, _) = tjLabsBluetoothManager.checkPermissions()
+        val (isCheckBleActivation, _) = tjLabsBluetoothManager.checkBleActivation()
+
+        //하나라도 만족하지않으면 false
+        return isCheckBleAvailable && isCheckBlePermission && isCheckBleActivation
+    }
+
     fun generateRfd(
         rfdIntervalMillis : Long = 500,
         bleScanWindowTimeMillis : Long = 1000,
