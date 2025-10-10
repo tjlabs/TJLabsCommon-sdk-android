@@ -115,7 +115,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
                 tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
                 tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
-                tjLabsBluetoothManager.startScan()
+
+                if (isBleScanAvailable()) {
+                    tjLabsBluetoothManager.startScan()
+                } else {
+                    tjLabsBluetoothManager.stopScan()
+                    this@RFDGenerator.bleScanInfoSet.clear()
+                }
+
+                Log.d("CheckReceivedForce", "isBleScanAvailable : ${isBleScanAvailable()}")
 
                 val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                 val averageBleMap =  TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)

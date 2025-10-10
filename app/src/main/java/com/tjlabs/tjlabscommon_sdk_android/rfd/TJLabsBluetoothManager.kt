@@ -125,11 +125,6 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     }
 
     fun stopScan() : Pair<Boolean, String> {
-        // BLE 활성화 상태 확인
-        if (bluetoothAdapter?.isEnabled != true) {
-            return Pair(false, "Bluetooth is not enabled.")
-        }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
                 != PackageManager.PERMISSION_GRANTED
