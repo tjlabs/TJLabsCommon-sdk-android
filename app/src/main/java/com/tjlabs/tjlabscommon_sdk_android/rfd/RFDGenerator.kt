@@ -17,6 +17,8 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Timer
 import java.util.TimerTask
 
+const val BLE_RESTART_INTERVAL = 5 * 60 * 1000L // 5분
+
 class RFDGenerator(private val application: Application, val userId : String = "") {
     interface RFDCallback {
         fun onRfdResult(rfd: ReceivedForce)
@@ -103,6 +105,8 @@ class RFDGenerator(private val application: Application, val userId : String = "
         val timer = Timer()
         rfdTimer = timer
 
+
+        //bleManager 에서 scan 결과가 나옴.
         tjLabsBluetoothManager.getBleScanResult(object :
             TJLabsBluetoothManager.ScanResultListener {
             override fun onScanBleSetResultOrNull(bleScanInfoSet: MutableSet<BLEScanInfo>) {
@@ -110,21 +114,20 @@ class RFDGenerator(private val application: Application, val userId : String = "
             }
         })
 
+        tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
+        tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
+        tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
+
+        if (isBleScanAvailable()) {
+            tjLabsBluetoothManager.startScan()
+        } else {
+            tjLabsBluetoothManager.stopScan()
+            this@RFDGenerator.bleScanInfoSet.clear()
+        }
+
+        //bleManager 에서 scan 결과가 나온 것을 0.5초마다 평균하여 콜백함..
         timer.schedule(object : TimerTask() {
             override fun run() {
-                tjLabsBluetoothManager.setBleScanInfoSetTimeLimitNanos(TJLabsUtilFunctions.millis2nanos(bleScanWindowTimeMillis))
-                tjLabsBluetoothManager.setMinRssiThreshold(minRssiThreshold)
-                tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
-
-                if (isBleScanAvailable()) {
-                    tjLabsBluetoothManager.startScan()
-                } else {
-                    tjLabsBluetoothManager.stopScan()
-                    this@RFDGenerator.bleScanInfoSet.clear()
-                }
-
-                Log.d("CheckReceivedForce", "isBleScanAvailable : ${isBleScanAvailable()}")
-
                 val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                 val averageBleMap =  TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
                 callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
@@ -137,6 +140,18 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 }
             }
         }, 0, rfdIntervalMillis)
+
+        //BLE_RESTART_INTERVAL 마다 동작하는 타이머
+        //ble manager를 재시작한다.
+        timer.schedule(object : TimerTask() {
+            override fun run() {
+                tjLabsBluetoothManager.stopScan(restart = true)
+                //이용 불가인 경우 다음 타이머 동작 시 다시 체크 후 시작됨.
+                if (isBleScanAvailable()) {
+                    tjLabsBluetoothManager.startScan()
+                }
+            }
+        }, BLE_RESTART_INTERVAL, BLE_RESTART_INTERVAL)
     }
 
 
@@ -197,6 +212,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
         tjLabsBluetoothManager.stopScan()
         // TODO() stopScan 리턴 활용하기
         bleScanInfoSet.clear()
+        Log.d("CheckBLERestart", "stop scan")
     }
 
     fun checkRfdException(callback: RFDCallback){

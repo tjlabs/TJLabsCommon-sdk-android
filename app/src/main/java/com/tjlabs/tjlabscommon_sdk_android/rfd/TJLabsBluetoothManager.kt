@@ -15,6 +15,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Collections
@@ -124,7 +125,7 @@ internal class TJLabsBluetoothManager(private val context: Context) {
         return Pair(true, "Success Start Scan")
     }
 
-    fun stopScan() : Pair<Boolean, String> {
+    fun stopScan(restart : Boolean = false) : Pair<Boolean, String> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
                 != PackageManager.PERMISSION_GRANTED
@@ -147,11 +148,15 @@ internal class TJLabsBluetoothManager(private val context: Context) {
 
         if (!isRunning)  return Pair(false, "Bluetooth is not enabled.")
         // 실행 중이 아니면 무시
-        isRunning = false
-        timerRunnable?.let { runnable ->
-            handler.removeCallbacks(runnable)
+
+        if (!restart) {
+            isRunning = false
+            timerRunnable?.let { runnable ->
+                handler.removeCallbacks(runnable)
+            }
+            timerRunnable = null
         }
-        timerRunnable = null
+
         return Pair(true, "Success Stop Scan")
     }
 
