@@ -128,6 +128,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
         //bleManager 에서 scan 결과가 나온 것을 0.5초마다 평균하여 콜백함..
         timer.schedule(object : TimerTask() {
             override fun run() {
+                val curTime = System.currentTimeMillis()
                 val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                 val averageBleMap =  TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
                 callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
@@ -138,6 +139,8 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     rfdGenerationTimeMillis = System.currentTimeMillis()
                     callback.onRfdEmptyMillis(0)
                 }
+
+                saveDataFunction(application, isSaveData, fileName, "${curTime},$averageBleMap" + "\n")
             }
         }, 0, rfdIntervalMillis)
 
