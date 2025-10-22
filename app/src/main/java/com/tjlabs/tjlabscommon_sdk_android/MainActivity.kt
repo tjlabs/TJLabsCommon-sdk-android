@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 })
-            uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
+            uvdGenerator.setUserMode(UserMode.MODE_AUTO)
             uvdGenerator.generateSimulationUvd(maxPDRStepLength = 0.7f, baseFileName = baseFileName, callback = object : UVDGenerator.UVDCallback{
                 override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
                     Log.d("CheckData", "mode : $mode // uvd : $uvd")
@@ -99,7 +99,7 @@ class MainActivity : AppCompatActivity() {
 
         }
         btnStart.setOnClickListener {
-            val saveData = true
+            val saveData = false
 //            val baseFileName = "aos_${region}_${sectorId}_${serviceStartTime}_${deviceModel}_${deviceOsVersion}"
             val baseFileName = "aos_"
 
@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
-            uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
+            uvdGenerator.setUserMode(UserMode.MODE_PEDESTRIAN)
             uvdGenerator.generateUvd(maxPDRStepLength = 0.7f, isSaveData = saveData, fileName = "aos_sensor", callback = object : UVDGenerator.UVDCallback{
                 override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
                     Log.d("UVDResult", "mode : $mode // uvd : $uvd")
