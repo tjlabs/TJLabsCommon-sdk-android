@@ -1,7 +1,7 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 
 plugins {
-//        id("com.android.application")
+//    id("com.android.application")
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
@@ -9,7 +9,7 @@ plugins {
 
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 3
+val versionPatch = 6
 
 
 android {
@@ -17,13 +17,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
-//        applicationId = "com.tjlabs.tjlabscommon_sdk_android"
-//        versionCode = 1
-//        versionName = "1.0"
         minSdk = 29
         targetSdk = 34
-
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -35,7 +30,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -71,15 +66,15 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                from(components["release"])
-                groupId = "com.github.tjlabs"
-                artifactId = "TJLabsCommon-sdk-android"
-                version = "$versionMajor.$versionMinor.$versionPatch"
-            }
-        }
-    }
-}
+//afterEvaluate {
+//    publishing {
+//        publications {
+//            create<MavenPublication>("release") {
+//                from(components["release"])
+//                groupId = "com.github.tjlabs"
+//                artifactId = "TJLabsCommon-sdk-android"
+//                version = "$versionMajor.$versionMinor.$versionPatch"
+//            }
+//        }
+//    }
+//}
