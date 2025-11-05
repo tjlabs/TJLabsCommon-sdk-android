@@ -60,7 +60,7 @@ class UVDGenerator(private val application: Application, private val userId : St
     private var routeTrackFinishedTime : Long = 0
 
     private var isInEntranceLevel: Boolean = false
-    private var isStartRoutTrack: Boolean = false
+    private var isStartRouteTrack: Boolean = false
 
     private var isBackGround = false
 
@@ -91,8 +91,9 @@ class UVDGenerator(private val application: Application, private val userId : St
         isInEntranceLevel = flag
     }
 
-    fun setIsStartRoutTrack(flag : Boolean) {
-        isStartRoutTrack = flag
+    fun setIsStartRouteTrack(flag : Boolean) {
+        isStartRouteTrack = flag
+        tjLabsDrDistanceEstimator.setIsStartRouteTrack(flag)
     }
 
     fun setIsBackground(flag : Boolean) {
@@ -268,7 +269,7 @@ class UVDGenerator(private val application: Application, private val userId : St
             }
 
             val diffRouteTrackTime = currentTime - routeTrackFinishedTime
-            if (isInEntranceLevel || isStartRoutTrack) {
+            if (isInEntranceLevel || isStartRouteTrack) {
                 currentUserMode = UserMode.MODE_VEHICLE
                 lastModeChangedTime = currentTime
             } else if (diffRouteTrackTime > 0 && diffRouteTrackTime < MODE_CHANGE_TIME_AFTER_ROUTE_TRACK ) {

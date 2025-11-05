@@ -316,4 +316,11 @@ object TJLabsUtilFunctions{
         }
     }
 
+    internal fun calRMS(buffer: List<Float>): Float {
+        if (buffer.isEmpty() || buffer.size < 10) return 1.0f
+
+        val squaredSum = buffer.fold(0.0f) { acc, value -> acc + value * value }
+        val mean = squaredSum / buffer.size
+        return sqrt(mean)
+    }
 }

@@ -81,3 +81,13 @@ internal data class TimeStampFloat(
     var timestamp: Long,
     var valuestamp: Float
 )
+
+internal enum class DrState {
+    MOVE, STOP, UNKNOWN
+}
+
+
+enum class RmsStopThresholdUpdateType {
+    ACC, GYRO
+}
+
