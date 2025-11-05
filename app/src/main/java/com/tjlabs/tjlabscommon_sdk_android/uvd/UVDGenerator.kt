@@ -91,9 +91,9 @@ class UVDGenerator(private val application: Application, private val userId : St
         isInEntranceLevel = flag
     }
 
-    fun setIsStartRoutTrack(flag : Boolean) {
+    fun setIsStartRouteTrack(flag : Boolean) {
         isStartRouteTrack = flag
-        tjLabsDrDistanceEstimator.setIsStartRoutTrack(flag)
+        tjLabsDrDistanceEstimator.setIsStartRouteTrack(flag)
     }
 
     fun setIsBackground(flag : Boolean) {

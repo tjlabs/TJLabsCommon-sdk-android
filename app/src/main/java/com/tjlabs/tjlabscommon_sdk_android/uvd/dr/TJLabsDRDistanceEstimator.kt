@@ -313,7 +313,7 @@ internal class TJLabsDRDistanceEstimator {
         isSufficientRfdAutoModeBuffer = isSufficientForAutoMode
     }
 
-    fun setIsStartRoutTrack(flag : Boolean) {
+    fun setIsStartRouteTrack(flag : Boolean) {
         isStartRouteTrack = flag
     }
 
