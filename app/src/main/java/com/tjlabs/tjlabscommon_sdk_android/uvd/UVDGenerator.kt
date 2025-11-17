@@ -13,7 +13,7 @@ import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
 const val sensorFrequency = 40
 const val MODE_CHANGE_TIME_CONDITION: Float = 10 * 1000f
 const val MODE_CHANGE_RFLOW_TIME_OVER: Float = 0.1f
-const val MODE_CHANGE_RFLOW_FORCE: Float = 0.065f
+const val MODE_CHANGE_RFLOW_FORCE: Float = 0.035f // 기존 0.065
 const val MODE_CHANGE_TIME_AFTER_ROUTE_TRACK: Float = 30 * 1000f
 
 class UVDGenerator(private val application: Application, private val userId : String = "") {
