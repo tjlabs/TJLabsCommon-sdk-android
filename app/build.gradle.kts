@@ -66,15 +66,15 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 }
 
-//afterEvaluate {
-//    publishing {
-//        publications {
-//            create<MavenPublication>("release") {
-//                from(components["release"])
-//                groupId = "com.github.tjlabs"
-//                artifactId = "TJLabsCommon-sdk-android"
-//                version = "$versionMajor.$versionMinor.$versionPatch"
-//            }
-//        }
-//    }
-//}
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.github.tjlabs"
+                artifactId = "TJLabsCommon-sdk-android"
+                version = "$versionMajor.$versionMinor.$versionPatch"
+            }
+        }
+    }
+}
