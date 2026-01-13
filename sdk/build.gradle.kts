@@ -1,7 +1,6 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 
 plugins {
-//    id("com.android.application")
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
@@ -9,7 +8,7 @@ plugins {
 
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 8
+val versionPatch = 12
 
 
 android {
@@ -17,16 +16,10 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        minSdk = 29
+        minSdk = 26
         targetSdk = 34
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
-//    libraryVariants.all {
-//        outputs.all {
-//            (this as BaseVariantOutputImpl).outputFileName = "app-release-common.aar"
-//        }
-//    }
 
     buildTypes {
         release {
@@ -35,6 +28,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            consumerProguardFiles("consumer-rules.pro")
         }
     }
     compileOptions {
@@ -55,15 +49,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.androidx.core.ktx.v131)
-    implementation(libs.androidx.activity)
     implementation(libs.androidx.appcompat.v120)
-    implementation(libs.material.v120)
-    implementation(libs.androidx.constraintlayout.v213)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit.v113)
-    androidTestImplementation(libs.androidx.espresso.core.v340)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.coroutines.android)
 }
 
 afterEvaluate {
@@ -71,7 +57,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.github.tjlabs"
+                groupId = "com.tjlabs"
                 artifactId = "TJLabsCommon-sdk-android"
                 version = "$versionMajor.$versionMinor.$versionPatch"
             }

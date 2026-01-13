@@ -1,5 +1,6 @@
 pluginManagement {
     repositories {
+        mavenLocal()
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -17,6 +18,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
     repositories {
+        mavenLocal()
         maven { url = uri("/Users/yuchangsoo/local-maven-repo") }
         google()
         mavenCentral()
@@ -25,4 +27,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "TJLabsCommon-sdk-android"
-include(":app")
+include(":sdk")

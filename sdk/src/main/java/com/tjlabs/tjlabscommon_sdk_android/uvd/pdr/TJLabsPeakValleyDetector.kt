@@ -1,7 +1,7 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.pdr
 
-import com.tjlabs.tjlabscommon_sdk_android.uvd.TimeStampFloat
-import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorPatternType
+import com.tjlabs.tjlabscommon_sdk_android.model.TimeStampFloat
+import com.tjlabs.tjlabscommon_sdk_android.model.SensorPatternType
 import java.util.LinkedList
 
 internal class TJLabsPeakValleyDetector(private val amplitudeThreshold: Float = 0.18f,

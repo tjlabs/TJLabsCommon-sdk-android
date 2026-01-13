@@ -1,0 +1,1 @@
+-keep class com.tjlabs.tjlabscommon_sdk_android.** { *; }

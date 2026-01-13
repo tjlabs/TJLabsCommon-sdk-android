@@ -1,5 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.dr
 
+import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRMS
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
@@ -7,17 +8,16 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calVariance
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.exponentialMovingAverage
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.l2Normalize
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.transBody2Nav
-import com.tjlabs.tjlabscommon_sdk_android.uvd.Attitude
-import com.tjlabs.tjlabscommon_sdk_android.uvd.DrState
-import com.tjlabs.tjlabscommon_sdk_android.uvd.RmsStopThresholdUpdateType
-import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorData
-import com.tjlabs.tjlabscommon_sdk_android.uvd.UnitDistance
+import com.tjlabs.tjlabscommon_sdk_android.model.Attitude
+import com.tjlabs.tjlabscommon_sdk_android.model.DrState
+import com.tjlabs.tjlabscommon_sdk_android.model.RmsStopThresholdUpdateType
+import com.tjlabs.tjlabscommon_sdk_android.model.SensorData
+import com.tjlabs.tjlabscommon_sdk_android.model.UnitDistance
 import com.tjlabs.tjlabscommon_sdk_android.uvd.sensorFrequency
 import java.lang.Float.min
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.log10
-import kotlin.math.sqrt
 
 
 const val VELOCITY_MIN: Float = 4f
@@ -192,39 +192,35 @@ internal class TJLabsDRDistanceEstimator {
 
         val rflowScale: Float = calRflowVelocityScale(rflowForVelocity, isSufficientRfdVelocityBuffer)
 
-        if (!isStartRouteTrack) {
-            entranceVelocityScale = 1.0f
-        }
+//        if (!isStartRouteTrack) {
+//            entranceVelocityScale = 1.0f
+//        }
 
         var velocityInputScale : Float = (velocityInput*velocityScale*entranceVelocityScale)
-
-        if (velocityInputScale < 7) {
+        if (velocityInputScale < VELOCITY_MIN) {
             velocityInputScale = 0f
-            if (isSufficientRfdBuffer && rflow < 0.5 && !isStartRouteTrack) {
-                velocityInputScale = VELOCITY_MAX * rflowScale
-            }
+//            if (isSufficientRfdBuffer && rflow < 0.5 && !isStartRouteTrack) {
+//                velocityInputScale = VELOCITY_MAX * rflowScale
+//            }
         } else if (velocityInputScale > VELOCITY_MAX) {
             velocityInputScale = VELOCITY_MAX
         }
 
         // RFlow Stop Detection
-        if (isSufficientRfdBuffer && rflow >= RF_SC_THRESHOLD_DR) {
-            velocityInputScale = 0f
-        }
+//        if (isSufficientRfdBuffer && rflow >= RF_SC_THRESHOLD_DR) {
+//            velocityInputScale = 0f
+//        }
 
+
+//        if (velocityInputScale.toInt() == 0 && isStartRouteTrack) {
+//            velocityInputScale = VELOCITY_MIN
+//        }
+
+//        if (velocityInputScale != 0f && drState == DrState.STOP) {
+//            velocityInputScale = 0f
+//        }
         val delT = if (dtime == null) 1 / sensorFrequency.toFloat() else ((dtime) * 1e-3).toFloat()
-
-        if (velocityInputScale.toInt() == 0 && isStartRouteTrack) {
-            velocityInputScale = VELOCITY_MIN
-        }
-
-        if (velocityInputScale != 0f && drState == DrState.STOP) {
-            velocityInputScale = 0f
-        }
-
-
         val velocityMps = (velocityInputScale/3.6)*turnScale
-
         finalUnitResult.isIndexChanged = false
         finalUnitResult.velocity = (velocityMps * 3.6f).toFloat()
         distance += (velocityMps*delT).toFloat()

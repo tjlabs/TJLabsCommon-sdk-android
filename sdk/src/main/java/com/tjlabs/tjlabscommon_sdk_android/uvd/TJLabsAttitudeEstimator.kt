@@ -1,6 +1,7 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
-import android.util.Log
+import com.tjlabs.tjlabscommon_sdk_android.model.Attitude
+import com.tjlabs.tjlabscommon_sdk_android.model.SensorData
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAngleOfRotation
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAttEMA
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calAttitudeUsingGameVector

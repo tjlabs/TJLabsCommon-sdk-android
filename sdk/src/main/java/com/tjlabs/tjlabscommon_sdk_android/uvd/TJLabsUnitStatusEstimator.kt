@@ -1,5 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
+import com.tjlabs.tjlabscommon_sdk_android.model.Attitude
 import java.util.*
 import kotlin.math.absoluteValue
 

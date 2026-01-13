@@ -2,9 +2,8 @@ package com.tjlabs.tjlabscommon_sdk_android.utils
 
 //import com.tjlabs.tjlabscommon_sdk_android.uvd.Attitude
 //import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorAxisValue
-import com.tjlabs.tjlabscommon_sdk_android.uvd.Attitude
-import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorAxisValue
-import java.util.ArrayList
+import com.tjlabs.tjlabscommon_sdk_android.model.Attitude
+import com.tjlabs.tjlabscommon_sdk_android.model.SensorAxisValue
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.asin
@@ -308,13 +307,11 @@ object TJLabsUtilFunctions{
         }
     }
 
-
-    fun <T> List<T>.safeSnapshot(): List<T> {
+    fun <T> MutableList<T>.safeSnapshot(): List<T> =
         synchronized(this) {
-            val snapshot = this.toList()
-            return snapshot
+            this.toList()
         }
-    }
+
 
     internal fun calRMS(buffer: List<Float>): Float {
         if (buffer.isEmpty() || buffer.size < 10) return 1.0f

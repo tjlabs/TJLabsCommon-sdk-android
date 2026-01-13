@@ -4,10 +4,12 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanFilter
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Handler
-import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
+import com.tjlabs.tjlabscommon_sdk_android.model.BLEScanInfo
+import com.tjlabs.tjlabscommon_sdk_android.model.RFDErrorCode
+import com.tjlabs.tjlabscommon_sdk_android.model.ReceivedForce
+import com.tjlabs.tjlabscommon_sdk_android.model.ScanMode
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleMutableList
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleSimulationIndex

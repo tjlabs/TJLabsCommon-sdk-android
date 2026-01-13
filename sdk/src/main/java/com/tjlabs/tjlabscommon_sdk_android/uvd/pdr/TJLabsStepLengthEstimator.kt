@@ -1,6 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.pdr
 
-import com.tjlabs.tjlabscommon_sdk_android.uvd.TimeStampFloat
+import com.tjlabs.tjlabscommon_sdk_android.model.TimeStampFloat
 import java.util.LinkedList
 
 internal class TJLabsStepLengthEstimator

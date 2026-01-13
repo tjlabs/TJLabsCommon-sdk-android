@@ -2,7 +2,7 @@ package com.tjlabs.tjlabscommon_sdk_android.simulation
 
 import android.app.Application
 import android.content.Context.MODE_APPEND
-import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorData
+import com.tjlabs.tjlabscommon_sdk_android.model.SensorData
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
