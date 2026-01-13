@@ -1,4 +1,4 @@
-package com.tjlabs.tjlabscommon_sdk_android.model
+package com.tjlabs.tjlabscommon_sdk_android.rfd
 
 data class ReceivedForce(
     val tenant_user_name: String = "",

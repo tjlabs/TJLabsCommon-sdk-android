@@ -1,4 +1,4 @@
-package com.tjlabs.tjlabscommon_sdk_android.model
+package com.tjlabs.tjlabscommon_sdk_android.uvd
 
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 

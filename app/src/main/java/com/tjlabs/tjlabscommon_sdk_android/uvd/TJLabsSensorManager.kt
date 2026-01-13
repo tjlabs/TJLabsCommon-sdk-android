@@ -6,7 +6,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import com.tjlabs.tjlabscommon_sdk_android.model.SensorData
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Timer
 import java.util.TimerTask

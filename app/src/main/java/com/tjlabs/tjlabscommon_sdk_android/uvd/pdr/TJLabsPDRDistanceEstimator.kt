@@ -3,10 +3,10 @@ package com.tjlabs.tjlabscommon_sdk_android.uvd.pdr
 import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.exponentialMovingAverage
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.l2Normalize
-import com.tjlabs.tjlabscommon_sdk_android.model.SensorData
-import com.tjlabs.tjlabscommon_sdk_android.model.SensorPatternType
-import com.tjlabs.tjlabscommon_sdk_android.model.TimeStampFloat
-import com.tjlabs.tjlabscommon_sdk_android.model.UnitDistance
+import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorData
+import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorPatternType
+import com.tjlabs.tjlabscommon_sdk_android.uvd.TimeStampFloat
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UnitDistance
 import java.util.LinkedList
 
 private const val NORMAL_STEP_COUNT_SET : Int = 3
@@ -175,8 +175,8 @@ internal class TJLabsPDRDistanceEstimator
 
 
     private fun updateNormalStepCheckCount(accPeakQueue: LinkedList<TimeStampFloat>,
-                                           accValleyQueue: LinkedList<TimeStampFloat>,
-                                           normalStepCheckCount: Int): Int {
+                                   accValleyQueue: LinkedList<TimeStampFloat>,
+                                   normalStepCheckCount: Int): Int {
         if (accPeakQueue.size <= 2 || accValleyQueue.size <= 2)
             return normalStepCheckCount + 1
 

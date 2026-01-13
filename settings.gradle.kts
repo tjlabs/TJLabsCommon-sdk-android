@@ -27,4 +27,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "TJLabsCommon-sdk-android"
-include(":sdk")
+include(":app")

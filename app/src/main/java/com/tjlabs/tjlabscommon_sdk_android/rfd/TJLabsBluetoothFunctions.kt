@@ -1,8 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
 import android.util.Log
-import com.tjlabs.tjlabscommon_sdk_android.model.BLEScanInfo
-import com.tjlabs.tjlabscommon_sdk_android.model.RSSIClass
 
 internal object TJLabsBluetoothFunctions {
     fun removeBleScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {

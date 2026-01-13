@@ -1,14 +1,15 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 
 plugins {
+//    id("com.android.application")
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
 }
 
-val versionMajor = 1
+val versionMajor = 2
 val versionMinor = 0
-val versionPatch = 12
+val versionPatch = 0
 
 
 android {
@@ -28,7 +29,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            consumerProguardFiles("consumer-rules.pro")
         }
     }
     compileOptions {
@@ -49,7 +49,15 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.androidx.core.ktx.v131)
+    implementation(libs.androidx.activity)
     implementation(libs.androidx.appcompat.v120)
+    implementation(libs.material.v120)
+    implementation(libs.androidx.constraintlayout.v213)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit.v113)
+    androidTestImplementation(libs.androidx.espresso.core.v340)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.android)
 }
 
 afterEvaluate {

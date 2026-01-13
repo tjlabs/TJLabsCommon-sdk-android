@@ -1,6 +1,5 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.dr
 
-import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRMS
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
@@ -8,11 +7,11 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calVariance
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.exponentialMovingAverage
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.l2Normalize
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.transBody2Nav
-import com.tjlabs.tjlabscommon_sdk_android.model.Attitude
-import com.tjlabs.tjlabscommon_sdk_android.model.DrState
-import com.tjlabs.tjlabscommon_sdk_android.model.RmsStopThresholdUpdateType
-import com.tjlabs.tjlabscommon_sdk_android.model.SensorData
-import com.tjlabs.tjlabscommon_sdk_android.model.UnitDistance
+import com.tjlabs.tjlabscommon_sdk_android.uvd.Attitude
+import com.tjlabs.tjlabscommon_sdk_android.uvd.DrState
+import com.tjlabs.tjlabscommon_sdk_android.uvd.RmsStopThresholdUpdateType
+import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorData
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UnitDistance
 import com.tjlabs.tjlabscommon_sdk_android.uvd.sensorFrequency
 import java.lang.Float.min
 import kotlin.math.abs

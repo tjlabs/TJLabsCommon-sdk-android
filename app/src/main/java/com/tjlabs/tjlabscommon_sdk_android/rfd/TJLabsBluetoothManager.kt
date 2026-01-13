@@ -15,8 +15,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import androidx.core.app.ActivityCompat
-import com.tjlabs.tjlabscommon_sdk_android.model.BLEScanInfo
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Collections
 import java.util.HashSet
 
