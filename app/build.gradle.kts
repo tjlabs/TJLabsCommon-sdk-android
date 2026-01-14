@@ -7,9 +7,9 @@ plugins {
     id("maven-publish")
 }
 
-val versionMajor = 2
+val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 0
+val versionPatch = 9
 
 
 android {
