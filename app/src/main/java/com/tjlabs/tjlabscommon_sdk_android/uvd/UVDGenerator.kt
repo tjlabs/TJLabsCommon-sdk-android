@@ -146,6 +146,10 @@ class UVDGenerator(private val application: Application, private val userId : St
         })
     }
 
+    fun loadUvdData(application: Application, fileName : String) : Boolean {
+        return JupiterSimulator.loadSensorData(application, fileName)
+    }
+
     fun generateSimulationUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
                               minPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMinStepLength(),
                               maxPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMaxStepLength(),
@@ -157,7 +161,7 @@ class UVDGenerator(private val application: Application, private val userId : St
         tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
         tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
 
-        if (JupiterSimulator.loadSensorData(application, baseFileName)) {
+        if (JupiterSimulator.loadUvdData) {
             tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
                 override fun onSensorChangedResult(sensorData: SensorData) {
                     val index = sensorSimulationIndex % sensorMutableList.size

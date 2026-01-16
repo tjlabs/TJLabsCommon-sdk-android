@@ -19,6 +19,9 @@ internal object JupiterSimulator {
     var setSimulation = false
     private var baseFileName = ""
 
+    var loadRfdData = false
+    var loadUvdData = false
+
     fun setBaseFileName(fileName: String) {
         baseFileName = fileName
     }
@@ -42,6 +45,7 @@ internal object JupiterSimulator {
             inputStreamReader.close()
             fileInputStream.close()
             bleSuccess = true
+            loadRfdData = true
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -72,6 +76,7 @@ internal object JupiterSimulator {
             inputStreamReader.close()
             fileInputStream.close()
             sensorSuccess = true
+            loadUvdData = true
 
         } catch (e: Exception) {
             e.printStackTrace()

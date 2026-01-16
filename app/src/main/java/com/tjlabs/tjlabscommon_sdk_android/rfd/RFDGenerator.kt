@@ -157,6 +157,9 @@ class RFDGenerator(private val application: Application, val userId : String = "
         }, BLE_RESTART_INTERVAL, BLE_RESTART_INTERVAL)
     }
 
+    fun loadRfdData(application: Application, fileName : String) : Boolean {
+        return JupiterSimulator.loadBleData(application, fileName)
+    }
 
     fun generateSimulationRfd(
         rfdIntervalMillis: Long = 500,
@@ -169,7 +172,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
     ) {
         rfdGenerationTimeMillis = System.currentTimeMillis()
 
-        if (JupiterSimulator.loadBleData(application, baseFileName)) {
+        if (JupiterSimulator.loadRfdData) {
             bleSimulationIndex = 0 // index 초기화
 
             val timer = Timer()
