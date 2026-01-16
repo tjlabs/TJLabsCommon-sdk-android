@@ -191,33 +191,33 @@ internal class TJLabsDRDistanceEstimator {
 
         val rflowScale: Float = calRflowVelocityScale(rflowForVelocity, isSufficientRfdVelocityBuffer)
 
-//        if (!isStartRouteTrack) {
-//            entranceVelocityScale = 1.0f
-//        }
+        if (!isStartRouteTrack) {
+            entranceVelocityScale = 1.0f
+        }
 
         var velocityInputScale : Float = (velocityInput*velocityScale*entranceVelocityScale)
         if (velocityInputScale < VELOCITY_MIN) {
             velocityInputScale = 0f
-//            if (isSufficientRfdBuffer && rflow < 0.5 && !isStartRouteTrack) {
-//                velocityInputScale = VELOCITY_MAX * rflowScale
-//            }
+            if (isSufficientRfdBuffer && rflow < 0.4) {
+                velocityInputScale = VELOCITY_MAX * rflowScale
+            }
         } else if (velocityInputScale > VELOCITY_MAX) {
             velocityInputScale = VELOCITY_MAX
         }
 
         // RFlow Stop Detection
-//        if (isSufficientRfdBuffer && rflow >= RF_SC_THRESHOLD_DR) {
-//            velocityInputScale = 0f
-//        }
+        if (isSufficientRfdBuffer && rflow >= RF_SC_THRESHOLD_DR) {
+            velocityInputScale = 0f
+        }
 
 
-//        if (velocityInputScale.toInt() == 0 && isStartRouteTrack) {
-//            velocityInputScale = VELOCITY_MIN
-//        }
+        if (velocityInputScale.toInt() == 0 && isStartRouteTrack) {
+            velocityInputScale = VELOCITY_MIN
+        }
 
-//        if (velocityInputScale != 0f && drState == DrState.STOP) {
-//            velocityInputScale = 0f
-//        }
+        if (velocityInputScale != 0f && drState == DrState.STOP) {
+            velocityInputScale = 0f
+        }
         val delT = if (dtime == null) 1 / sensorFrequency.toFloat() else ((dtime) * 1e-3).toFloat()
         val velocityMps = (velocityInputScale/3.6)*turnScale
         finalUnitResult.isIndexChanged = false
