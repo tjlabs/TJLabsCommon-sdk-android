@@ -1,5 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.dr
 
+import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRMS
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
@@ -61,6 +62,8 @@ internal class TJLabsDRDistanceEstimator {
     private var drStateBuffer: MutableList<DrState> = mutableListOf()
     private var ACC_STOP_THRESHOLD: Float = 0.12f
     private var GYRO_STOP_THRESHOLD: Float = 0.03f
+
+    private var count = 0
 
     fun estimateDistanceInfo(dtime: Long?, sensorData: SensorData): Pair<UnitDistance, Float> {
         val acc = sensorData.acc
@@ -223,6 +226,12 @@ internal class TJLabsDRDistanceEstimator {
         finalUnitResult.isIndexChanged = false
         finalUnitResult.velocity = (velocityMps * 3.6f).toFloat()
         distance += (velocityMps*delT).toFloat()
+
+        count ++
+        if (count > 10) {
+            Log.d("CheckVelocity", "final vel : ${finalUnitResult.velocity} // raw velocity smooth : $velocitySmoothing // scale : ${velocityScale} // ent scale : $entranceVelocityScale //  turn scale : $turnScale // rflow : $rflowScale // isSufficientRfdBuffer : $isSufficientRfdBuffer // drState : $drState")
+            count = 0
+        }
 
         if (distance >= 1) {
             index += 1

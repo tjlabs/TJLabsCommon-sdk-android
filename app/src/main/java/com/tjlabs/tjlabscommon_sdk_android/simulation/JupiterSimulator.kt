@@ -135,23 +135,43 @@ internal object JupiterSimulator {
     }
 
     private fun parseMapString(mapString: String): Map<String, Float> {
-        val entries = mapString.trim('{', '}').split(", ").map { it.trim() }
+        val parts = mapString.trim().split(',', limit = 2)
+        val isHaveTimeFieldData = parts.size == 2 && parts[0].all { it.isDigit() }
+
+        var entries: List<String> = listOf()
+
+        // 시간 있으면 뒤쪽(part[1]), 없으면 전체(part[0] 또는 mapString)에서 {..}만 추출
+        val mapSection = if (isHaveTimeFieldData) parts[1] else parts[0]
+        val body = mapSection.trim().removePrefix("{").removeSuffix("}")
+
+        entries = if (body.isBlank()) {
+            emptyList()
+        } else {
+            // ", " 가 아닐 수도 있으니 "," 기준으로 안전하게 나눠서 trim
+            body.split(',').map { it.trim() }
+        }
+
         val map = mutableMapOf<String, Float>()
 
-        if (mapString != "{}") {
+        if (body.isNotEmpty()) {
             for (entry in entries) {
-                if (entry.contains('=')){
-                    var (key, value) = entry.split('=').map { it.trim() }
-                    if (value.contains("}")){
-                        value = value.split("}")[0]
+                if (entry.contains('=')) {
+                    // value 쪽에 '='이 더 있어도 안전하게 처리
+                    val (key, valueStrRaw) = entry.split('=', limit = 2).map { it.trim() }.let {
+                        it[0] to it.getOrNull(1).orEmpty()
                     }
-                    map[key] = value.toFloat()
+                    val valueStr = valueStrRaw.removeSuffix("}")
+                    val value = valueStr.toFloatOrNull() ?: continue
+                    if (key.isNotEmpty()) {
+                        map[key] = value
+                    }
                 }
             }
         }
 
         return map
     }
+
 
     fun saveDataFunction(app : Application, saveFlag : Boolean, fileName : String, data : String){
         if (saveFlag && fileName.isNotEmpty()) {
