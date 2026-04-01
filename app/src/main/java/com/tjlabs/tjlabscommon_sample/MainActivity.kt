@@ -1,14 +1,11 @@
-package com.tjlabs.tjlabscommon_sdk_android
+package com.tjlabs.tjlabscommon_sample
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.widget.Button
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -20,7 +17,7 @@ import com.tjlabs.tjlabscommon_sdk_android.uvd.UserMode
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var rfdGenerator : RFDGenerator
+    private lateinit var rfdGenerator: RFDGenerator
     private lateinit var uvdGenerator: UVDGenerator
 
     private val requiredPermissions =
@@ -42,8 +39,8 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-
     private val multiplePermissionsCode = 100
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -61,8 +58,14 @@ class MainActivity : AppCompatActivity() {
             Log.d("CheckData", "start")
 
             val baseFileName = "flip3_t5_6_1"
-            rfdGenerator.generateSimulationRfd(500L, 1000L, -100,
-                -40, getPressure = { 0f }, baseFileName, object : RFDGenerator.RFDCallback{
+            rfdGenerator.generateSimulationRfd(
+                500L,
+                1000L,
+                -100,
+                -40,
+                getPressure = { 0f },
+                baseFileName,
+                object : RFDGenerator.RFDCallback {
                     override fun onRfdResult(rfd: ReceivedForce) {
                         Log.d("CheckData", "rfd : $rfd")
                     }
@@ -72,75 +75,89 @@ class MainActivity : AppCompatActivity() {
 
                     override fun onRfdEmptyMillis(time: Long) {
                     }
-
-                })
+                }
+            )
             uvdGenerator.setUserMode(UserMode.MODE_AUTO)
-            uvdGenerator.generateSimulationUvd(maxPDRStepLength = 0.7f, baseFileName = baseFileName, callback = object : UVDGenerator.UVDCallback{
-                override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                    Log.d("CheckData", "mode : $mode // uvd : $uvd")
+            uvdGenerator.generateSimulationUvd(
+                maxPDRStepLength = 0.7f,
+                baseFileName = baseFileName,
+                callback = object : UVDGenerator.UVDCallback {
+                    override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
+                        Log.d("CheckData", "mode : $mode // uvd : $uvd")
+                    }
+
+                    override fun onPressureResult(hPa: Float) {
+                    }
+
+                    override fun onVelocityResult(kmPh: Float) {
+                    }
+
+                    override fun onMagNormSmoothingVarResult(value: Float) {
+                    }
+
+                    override fun onUvdPauseMillis(time: Long) {
+                    }
+
+                    override fun onUvdError(error: String) {
+                    }
                 }
-
-                override fun onPressureResult(hPa: Float) {
-                }
-
-                override fun onVelocityResult(kmPh: Float) {
-                }
-
-                override fun onMagNormSmoothingVarResult(value: Float) {
-                }
-
-                override fun onUvdPauseMillis(time: Long) {
-                }
-
-                override fun onUvdError(error: String) {
-                }
-
-            })
-
+            )
         }
+
         btnStart.setOnClickListener {
             val saveData = false
-//            val baseFileName = "aos_${region}_${sectorId}_${serviceStartTime}_${deviceModel}_${deviceOsVersion}"
             val baseFileName = "aos_"
 
-            rfdGenerator.generateRfd(1000, 1000, -100, -40, getPressure = {0f}, isSaveData = saveData, fileName ="aos_ble", object : RFDGenerator.RFDCallback{
-                override fun onRfdResult(rfd: ReceivedForce) {
-                    Log.d("BLETimerListener", "rfd : $rfd")
-                }
+            rfdGenerator.generateRfd(
+                1000,
+                1000,
+                -100,
+                -40,
+                getPressure = { 0f },
+                isSaveData = saveData,
+                fileName = "aos_ble",
+                object : RFDGenerator.RFDCallback {
+                    override fun onRfdResult(rfd: ReceivedForce) {
+                        Log.d("BLETimerListener", "rfd : $rfd")
+                    }
 
-                override fun onRfdError(code : Int, msg : String) {
-                    Log.d("BLETimerListener", "error : $msg")
-                }
+                    override fun onRfdError(code: Int, msg: String) {
+                        Log.d("BLETimerListener", "error : $msg")
+                    }
 
-                override fun onRfdEmptyMillis(time: Long) {
-                    Log.d("BLETimerListener", "time : $time")
+                    override fun onRfdEmptyMillis(time: Long) {
+                        Log.d("BLETimerListener", "time : $time")
+                    }
                 }
-            })
+            )
 
             uvdGenerator.setUserMode(UserMode.MODE_PEDESTRIAN)
-            uvdGenerator.generateUvd(maxPDRStepLength = 0.7f, isSaveData = saveData, fileName = "aos_sensor", callback = object : UVDGenerator.UVDCallback{
-                override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                    Log.d("UVDResult", "mode : $mode // uvd : $uvd")
+            uvdGenerator.generateUvd(
+                maxPDRStepLength = 0.7f,
+                isSaveData = saveData,
+                fileName = "aos_sensor",
+                callback = object : UVDGenerator.UVDCallback {
+                    override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
+                        Log.d("UVDResult", "mode : $mode // uvd : $uvd")
+                    }
+
+                    override fun onPressureResult(hPa: Float) {
+                    }
+
+                    override fun onVelocityResult(kmPh: Float) {
+                        Log.d("UVDVelocityResult", "kmPh : $kmPh")
+                    }
+
+                    override fun onMagNormSmoothingVarResult(value: Float) {
+                    }
+
+                    override fun onUvdPauseMillis(time: Long) {
+                    }
+
+                    override fun onUvdError(error: String) {
+                    }
                 }
-
-                override fun onPressureResult(hPa: Float) {
-                }
-
-                override fun onVelocityResult(kmPh: Float) {
-                    Log.d("UVDVelocityResult", "kmPh : $kmPh")
-
-                }
-
-                override fun onMagNormSmoothingVarResult(value: Float) {
-                }
-
-                override fun onUvdPauseMillis(time: Long) {
-                }
-
-                override fun onUvdError(error: String) {
-                }
-            })
-
+            )
         }
 
         btnStop.setOnClickListener {
@@ -149,21 +166,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun checkPermissions() {
         val rejectedPermissionList = ArrayList<String>()
         for (permission in requiredPermissions) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    permission
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                 rejectedPermissionList.add(permission)
             }
         }
-        //거절된 퍼미션이 있다면...
+
         if (rejectedPermissionList.isNotEmpty()) {
-            //권한 요청!
             val array = arrayOfNulls<String>(rejectedPermissionList.size)
             ActivityCompat.requestPermissions(
                 this,
