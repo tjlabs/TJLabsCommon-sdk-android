@@ -10,7 +10,7 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
-        maven(url = "https://jitpack.io") // JitPack plugin 지원 필요 시
+        maven(url = "https://jitpack.io")
     }
 }
 
@@ -28,3 +28,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "TJLabsCommon-sdk-android"
 include(":app")
+include(":sdk")
