@@ -1,11 +1,15 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd
 
 import android.app.Application
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.convertToSensorData
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.saveDataFunction
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.sensorMutableList
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.sensorSimulationIndex
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.convertToSensorData
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.loadUvdJsonData
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.saveUvdResultAsJson
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.sensorMutableList
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.sensorSimulationIndex
 import com.tjlabs.tjlabscommon_sdk_android.uvd.dr.TJLabsDRDistanceEstimator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
 
@@ -18,7 +22,8 @@ const val MODE_CHANGE_TIME_AFTER_ROUTE_TRACK: Float = 30 * 1000f
 
 class UVDGenerator(private val application: Application, private val userId : String = "") {
     interface UVDCallback {
-        fun onUvdResult(mode : UserMode, uvd: UserVelocity)
+        fun onUvdResult(mode : UserMode, uvd: UserVelocity) {
+        }
 
         fun onPressureResult(hPa : Float)
 
@@ -63,6 +68,9 @@ class UVDGenerator(private val application: Application, private val userId : St
     private var isStartRouteTrack: Boolean = false
 
     private var isBackGround = false
+    private var isSaveUvdData = false
+    private val simulationHandler = Handler(Looper.getMainLooper())
+    private var simulationRunnable: Runnable? = null
 
     fun setRFlow(rflow: Float, rflowForVelocity: Float, rflowForAutoMode: Float, isSufficient: Boolean, isSufficientForVelocity: Boolean, isSufficientForAutoMode: Boolean) {
         this.rflow = rflow
@@ -122,10 +130,10 @@ class UVDGenerator(private val application: Application, private val userId : St
                     minPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMinStepLength(),
                     maxPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMaxStepLength(),
                     isSaveData : Boolean = false,
-                    fileName : String = "",
                     callback : UVDCallback) {
 
         uvdGenerationTimeMillis = System.currentTimeMillis()
+        isSaveUvdData = isSaveData
         tjLabsPdrDistanceEstimator.setDefaultStepLength(defaultPDRStepLength)
         tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
         tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
@@ -139,29 +147,29 @@ class UVDGenerator(private val application: Application, private val userId : St
                     UserMode.MODE_VEHICLE -> generateVehicleUvd(curTime, dtime,sensorData, callback)
                     UserMode.MODE_AUTO -> generateAutoUvd(curTime, dtime, sensorData, callback)
                 }
-
-                saveDataFunction(application, isSaveData, fileName, "${curTime},${sensorData.toCollectString()}" + "\n")
                 preTime = curTime
             }
         })
     }
 
     fun loadUvdData(application: Application, fileName : String) : Boolean {
-        return JupiterSimulator.loadSensorData(application, fileName)
+        return JupiterDataFunctions.loadSensorData(application, fileName)
     }
 
-    fun generateSimulationUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
+    internal fun generateSimulationUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
                               minPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMinStepLength(),
                               maxPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMaxStepLength(),
                               baseFileName : String,
+                              isSaveData: Boolean = false,
                               callback : UVDCallback) {
 
         uvdGenerationTimeMillis = System.currentTimeMillis()
+        isSaveUvdData = isSaveData
         tjLabsPdrDistanceEstimator.setDefaultStepLength(defaultPDRStepLength)
         tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
         tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
 
-        if (JupiterSimulator.loadUvdData) {
+        if (JupiterDataFunctions.loadUvdData) {
             tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
                 override fun onSensorChangedResult(sensorData: SensorData) {
                     val index = sensorSimulationIndex % sensorMutableList.size
@@ -191,6 +199,73 @@ class UVDGenerator(private val application: Application, private val userId : St
         }
     }
 
+    fun generateSimulationUvdFromJson(
+        simulationUserId: String = userId,
+        serviceStartTime: String = JupiterDataFunctions.getServiceStartTime(),
+        callback: UVDCallback
+    ) {
+        val serviceStartTimeMillis = serviceStartTime.toLongOrNull()
+        if (serviceStartTimeMillis == null) {
+            callback.onUvdError("Invalid serviceStartTime. It must be epoch millis.")
+            return
+        }
+
+        val records = loadUvdJsonData(application, simulationUserId, serviceStartTime)
+        if (records.isEmpty()) {
+            callback.onUvdError("Load UVD JSON Simulation Data Error!")
+            return
+        }
+
+        simulationRunnable?.let { simulationHandler.removeCallbacks(it) }
+        var recordIndex = 0
+        val playbackStartElapsed = SystemClock.elapsedRealtime()
+
+        fun scheduleNext() {
+            if (recordIndex >= records.size) {
+                simulationRunnable = null
+                return
+            }
+
+            val nextRecord = records[recordIndex]
+            val relativeTime = nextRecord.mobileTime - serviceStartTimeMillis
+            val targetElapsed = playbackStartElapsed + relativeTime
+            val delay = (targetElapsed - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
+
+            val runnable = Runnable {
+                if (recordIndex >= records.size) return@Runnable
+
+                val record = records[recordIndex]
+                recordIndex++
+                val mode = when (record.mode.uppercase()) {
+                    "PDR" -> UserMode.MODE_PEDESTRIAN
+                    "DR" -> UserMode.MODE_VEHICLE
+                    "AUTO" -> UserMode.MODE_AUTO
+                    else -> {
+                        callback.onUvdError("Invalid UVD mode in JSON: ${record.mode}")
+                        scheduleNext()
+                        return@Runnable
+                    }
+                }
+
+                val uvdResult = UserVelocity(
+                    tenant_user_name = simulationUserId,
+                    mobile_time = record.mobileTime,
+                    index = record.index,
+                    length = record.length,
+                    heading = record.heading,
+                    looking = true
+                )
+                callback.onUvdResult(mode, uvdResult)
+
+                scheduleNext()
+            }
+            simulationRunnable = runnable
+            simulationHandler.postDelayed(runnable, delay)
+        }
+
+        scheduleNext()
+    }
+
     private fun resetVelocityAfterSeconds(velocity : Float, sec : Int = 2) : Float {
         return if (System.currentTimeMillis() - uvdGenerationTimeMillis < sec * 1000) {
             velocity
@@ -209,7 +284,9 @@ class UVDGenerator(private val application: Application, private val userId : St
             val index = pdrUnit.index
             val length = pdrUnit.length
             val heading = attDegree.yaw
-            callback.onUvdResult(UserMode.MODE_PEDESTRIAN, UserVelocity(userId, time, index, length, heading, isLookingStatus))
+            val uvdResult = UserVelocity(userId, time, index, length, heading, isLookingStatus)
+            callback.onUvdResult(UserMode.MODE_PEDESTRIAN, uvdResult)
+            saveUvd(UserMode.MODE_PEDESTRIAN, uvdResult)
             uvdGenerationTimeMillis = time
         } else {
             callback.onUvdPauseMillis(time - uvdGenerationTimeMillis)
@@ -229,7 +306,9 @@ class UVDGenerator(private val application: Application, private val userId : St
             val index = drUnit.index
             val length = drUnit.length
             val heading = attDegree.yaw
-            callback.onUvdResult(UserMode.MODE_VEHICLE, UserVelocity(userId, time, index, length, heading, true))
+            val uvdResult = UserVelocity(userId, time, index, length, heading, true)
+            callback.onUvdResult(UserMode.MODE_VEHICLE, uvdResult)
+            saveUvd(UserMode.MODE_VEHICLE, uvdResult)
             uvdGenerationTimeMillis = time
         } else {
             callback.onUvdPauseMillis(time - uvdGenerationTimeMillis)
@@ -293,7 +372,9 @@ class UVDGenerator(private val application: Application, private val userId : St
 
                 uvdGenerationTimeMillis = time
 
-                callback.onUvdResult(UserMode.MODE_PEDESTRIAN, UserVelocity(userId, time, autoUnitIndexCount, length, heading, isLookingStatus))
+                val uvdResult = UserVelocity(userId, time, autoUnitIndexCount, length, heading, isLookingStatus)
+                callback.onUvdResult(UserMode.MODE_PEDESTRIAN, uvdResult)
+                saveUvd(UserMode.MODE_PEDESTRIAN, uvdResult)
             } else{
                 callback.onUvdPauseMillis(time - uvdGenerationTimeMillis)
             }
@@ -305,7 +386,9 @@ class UVDGenerator(private val application: Application, private val userId : St
                 val heading = attDegree.yaw
 
                 uvdGenerationTimeMillis = time
-                callback.onUvdResult(UserMode.MODE_VEHICLE, UserVelocity(userId, time, autoUnitIndexCount, length, heading, true))
+                val uvdResult = UserVelocity(userId, time, autoUnitIndexCount, length, heading, true)
+                callback.onUvdResult(UserMode.MODE_VEHICLE, uvdResult)
+                saveUvd(UserMode.MODE_VEHICLE, uvdResult)
             } else{
                 callback.onUvdPauseMillis(time - uvdGenerationTimeMillis)
             }
@@ -332,10 +415,27 @@ class UVDGenerator(private val application: Application, private val userId : St
 
     fun stopUvdGeneration() {
         tjLabsSensorManager.stopSensorChanged()
+        simulationRunnable?.let { simulationHandler.removeCallbacks(it) }
+        simulationRunnable = null
         tjLabsPdrDistanceEstimator = TJLabsPDRDistanceEstimator()
         tjLabsAttitudeEstimator = TJLabsAttitudeEstimator(sensorFrequency)
         tjLabsUnitStatusEstimator = TJLabsUnitStatusEstimator()
         uvdGenerationTimeMillis = 0L
         drVelocityScale = 1f
+        isSaveUvdData = false
+    }
+
+    private fun saveUvd(mode: UserMode, uvd: UserVelocity) {
+        saveUvdResultAsJson(
+            app = application,
+            saveFlag = isSaveUvdData,
+            isBackGround = isBackGround,
+            userId = userId,
+            mobileTime = uvd.mobile_time,
+            mode = mode.value,
+            index = uvd.index,
+            length = uvd.length,
+            heading = uvd.heading
+        )
     }
 }
