@@ -7,12 +7,14 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
+import android.os.SystemClock
 import android.util.Log
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleMutableList
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.bleSimulationIndex
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.parseStringToMap
-import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterSimulator.saveDataFunction
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.bleMutableList
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.bleSimulationIndex
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.loadRfdJsonData
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.parseStringToMap
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.saveRfdResultAsJson
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Timer
 import java.util.TimerTask
@@ -32,6 +34,11 @@ class RFDGenerator(private val application: Application, val userId : String = "
     private var bleScanInfoSet = mutableSetOf<BLEScanInfo>()
     private var rfdGenerationTimeMillis = 0L
     private var rfdTimer: Timer? = null
+    private var isBackGround = false
+    private val simulationHandler = Handler(Looper.getMainLooper())
+    private var simulationRunnable: Runnable? = null
+    private val rfdIntervalMillis = 500L
+    private val bleScanWindowTimeMillis = 1000L
 
     init {
         setScanMode(ScanMode.ONLY_WARD_SCAN)
@@ -91,16 +98,18 @@ class RFDGenerator(private val application: Application, val userId : String = "
         return isCheckBleAvailable && isCheckBlePermission && isCheckBleActivation
     }
 
+    fun setIsBackground(flag: Boolean) {
+        isBackGround = flag
+    }
+
     fun generateRfd(
-        rfdIntervalMillis : Long = 500,
-        bleScanWindowTimeMillis : Long = 1000,
         minRssiThreshold : Int = -100,
         maxRssiThreshold : Int = -40,
         getPressure: () -> Float = {0f},
         isSaveData : Boolean = false,
-        fileName : String = "",
         callback: RFDCallback
     ) {
+
         rfdGenerationTimeMillis = System.currentTimeMillis()
         val timer = Timer()
         rfdTimer = timer
@@ -128,10 +137,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
         //bleManager 에서 scan 결과가 나온 것을 0.5초마다 평균하여 콜백함..
         timer.schedule(object : TimerTask() {
             override fun run() {
-                val curTime = System.currentTimeMillis()
                 val currentBleScanInfoSet = this@RFDGenerator.bleScanInfoSet
                 val averageBleMap =  TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
-                callback.onRfdResult(ReceivedForce(userId, System.currentTimeMillis() - (bleScanWindowTimeMillis / 2), averageBleMap, getPressure())) // 결과 리턴
+                val rfdResult = ReceivedForce(
+                    userId,
+                    System.currentTimeMillis() - (bleScanWindowTimeMillis / 2),
+                    averageBleMap,
+                    getPressure()
+                )
+                callback.onRfdResult(rfdResult) // 결과 리턴
 
                 if (averageBleMap.isEmpty()) {
                     callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
@@ -140,7 +154,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     callback.onRfdEmptyMillis(0)
                 }
 
-                saveDataFunction(application, isSaveData, fileName, "${curTime},$averageBleMap" + "\n")
+                saveRfdResultAsJson(
+                    app = application,
+                    saveFlag = isSaveData,
+                    isBackGround = isBackGround,
+                    userId = userId,
+                    mobileTime = rfdResult.mobile_time,
+                    pressureHpa = rfdResult.pressure,
+                    rfs = rfdResult.rfs
+                )
             }
         }, 0, rfdIntervalMillis)
 
@@ -158,21 +180,22 @@ class RFDGenerator(private val application: Application, val userId : String = "
     }
 
     fun loadRfdData(application: Application, fileName : String) : Boolean {
-        return JupiterSimulator.loadBleData(application, fileName)
+        return JupiterDataFunctions.loadBleData(application, fileName)
     }
 
-    fun generateSimulationRfd(
+    internal fun generateSimulationRfd(
         rfdIntervalMillis: Long = 500,
         bleScanWindowTimeMillis: Long = 1000,
         minRssiThreshold: Int = -100,
         maxRssiThreshold: Int = -40,
         getPressure: () -> Float = { 0f },
         baseFileName: String,
+        isSaveData: Boolean = false,
         callback: RFDCallback
     ) {
         rfdGenerationTimeMillis = System.currentTimeMillis()
 
-        if (JupiterSimulator.loadRfdData) {
+        if (JupiterDataFunctions.loadRfdData) {
             bleSimulationIndex = 0 // index 초기화
 
             val timer = Timer()
@@ -187,14 +210,13 @@ class RFDGenerator(private val application: Application, val userId : String = "
                         val averageBleMap = parseStringToMap(element)
                         bleSimulationIndex++
 
-                        callback.onRfdResult(
-                            ReceivedForce(
-                                userId,
-                                System.currentTimeMillis() - (bleScanWindowTimeMillis / 2),
-                                averageBleMap,
-                                getPressure()
-                            )
+                        val rfdResult = ReceivedForce(
+                            userId,
+                            System.currentTimeMillis() - (bleScanWindowTimeMillis / 2),
+                            averageBleMap,
+                            getPressure()
                         )
+                        callback.onRfdResult(rfdResult)
 
                         if (averageBleMap.isEmpty()) {
                             callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
@@ -202,6 +224,16 @@ class RFDGenerator(private val application: Application, val userId : String = "
                             rfdGenerationTimeMillis = System.currentTimeMillis()
                             callback.onRfdEmptyMillis(0)
                         }
+
+                        saveRfdResultAsJson(
+                            app = application,
+                            saveFlag = isSaveData,
+                            isBackGround = isBackGround,
+                            userId = userId,
+                            mobileTime = rfdResult.mobile_time,
+                            pressureHpa = rfdResult.pressure,
+                            rfs = rfdResult.rfs
+                        )
                     } else {
                         timer.cancel()
                     }
@@ -212,9 +244,75 @@ class RFDGenerator(private val application: Application, val userId : String = "
         }
     }
 
+    fun generateSimulationRfdFromJson(
+        simulationUserId: String = userId,
+        serviceStartTime: String = JupiterDataFunctions.getServiceStartTime(),
+        callback: RFDCallback
+    ) {
+        val serviceStartTimeMillis = serviceStartTime.toLongOrNull()
+        if (serviceStartTimeMillis == null) {
+            callback.onRfdError(998, "Invalid serviceStartTime. It must be epoch millis.")
+            return
+        }
+
+        val records = loadRfdJsonData(application, simulationUserId, serviceStartTime)
+        if (records.isEmpty()) {
+            callback.onRfdError(999, "Load RFD JSON Simulation Data Error!")
+            return
+        }
+
+        rfdGenerationTimeMillis = System.currentTimeMillis()
+        simulationRunnable?.let { simulationHandler.removeCallbacks(it) }
+
+        var recordIndex = 0
+        val playbackStartElapsed = SystemClock.elapsedRealtime()
+
+        fun scheduleNext() {
+            if (recordIndex >= records.size) {
+                simulationRunnable = null
+                return
+            }
+
+            val nextRecord = records[recordIndex]
+            val relativeTime = (nextRecord.mobileTime + rfdIntervalMillis) - serviceStartTimeMillis
+            val targetElapsed = playbackStartElapsed + relativeTime
+            val delay = (targetElapsed - SystemClock.elapsedRealtime()).coerceAtLeast(0L)
+
+            val runnable = Runnable {
+                if (recordIndex >= records.size) return@Runnable
+
+                val record = records[recordIndex]
+                recordIndex++
+
+                val rfdResult = ReceivedForce(
+                    tenant_user_name = simulationUserId,
+                    mobile_time = record.mobileTime,
+                    rfs = record.rfs,
+                    pressure = record.pressureHpa
+                )
+                callback.onRfdResult(rfdResult)
+
+                if (record.rfs.isEmpty()) {
+                    callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)
+                } else {
+                    rfdGenerationTimeMillis = System.currentTimeMillis()
+                    callback.onRfdEmptyMillis(0)
+                }
+
+                scheduleNext()
+            }
+            simulationRunnable = runnable
+            simulationHandler.postDelayed(runnable, delay)
+        }
+
+        scheduleNext()
+    }
+
     fun stopRfdGeneration() {
         rfdTimer?.cancel()
         rfdTimer = null
+        simulationRunnable?.let { simulationHandler.removeCallbacks(it) }
+        simulationRunnable = null
         tjLabsBluetoothManager.stopScan()
         // TODO() stopScan 리턴 활용하기
         bleScanInfoSet.clear()

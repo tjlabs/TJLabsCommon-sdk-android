@@ -12,6 +12,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
+import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataManager
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UVDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserMode
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
@@ -25,22 +27,18 @@ class MainActivity : AppCompatActivity() {
             arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
                 Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_WIFI_STATE,
-                Manifest.permission.CHANGE_WIFI_STATE
+                Manifest.permission.ACCESS_FINE_LOCATION
             )
         } else {
             arrayOf(
                 Manifest.permission.BLUETOOTH,
                 Manifest.permission.BLUETOOTH_ADMIN,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_WIFI_STATE,
-                Manifest.permission.CHANGE_WIFI_STATE
+                Manifest.permission.ACCESS_FINE_LOCATION
             )
         }
 
     private val multiplePermissionsCode = 100
-
+    private var pressure = 0f
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -50,24 +48,19 @@ class MainActivity : AppCompatActivity() {
         val btnStart = findViewById<Button>(R.id.btnStart)
         val btnStop = findViewById<Button>(R.id.btnStop)
         val btnStartSimul = findViewById<Button>(R.id.btnStartSimul)
-
-        rfdGenerator = RFDGenerator(application, "temp")
-        uvdGenerator = UVDGenerator(application, "temp")
+        val userId = "temp"
+        val initStartTime = 1775451068715L
+        rfdGenerator = RFDGenerator(application, userId)
+        uvdGenerator = UVDGenerator(application, userId)
 
         btnStartSimul.setOnClickListener {
-            Log.d("CheckData", "start")
-
-            val baseFileName = "flip3_t5_6_1"
-            rfdGenerator.generateSimulationRfd(
-                500L,
-                1000L,
-                -100,
-                -40,
-                getPressure = { 0f },
-                baseFileName,
-                object : RFDGenerator.RFDCallback {
+            Log.d("CheckJsonData", "start")
+            rfdGenerator.generateSimulationRfdFromJson(
+                userId,
+                initStartTime.toString(),
+                callback = object : RFDGenerator.RFDCallback {
                     override fun onRfdResult(rfd: ReceivedForce) {
-                        Log.d("CheckData", "rfd : $rfd")
+                        Log.d("CheckJsonData(sim)", "rfd : $rfd")
                     }
 
                     override fun onRfdError(code: Int, msg: String) {
@@ -78,15 +71,16 @@ class MainActivity : AppCompatActivity() {
                 }
             )
             uvdGenerator.setUserMode(UserMode.MODE_AUTO)
-            uvdGenerator.generateSimulationUvd(
-                maxPDRStepLength = 0.7f,
-                baseFileName = baseFileName,
+            uvdGenerator.generateSimulationUvdFromJson(
+                userId,
+                initStartTime.toString(),
                 callback = object : UVDGenerator.UVDCallback {
                     override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                        Log.d("CheckData", "mode : $mode // uvd : $uvd")
+                        Log.d("CheckJsonData(sim)", "mode : $mode // uvd : $uvd")
                     }
 
                     override fun onPressureResult(hPa: Float) {
+                        pressure = hPa
                     }
 
                     override fun onVelocityResult(kmPh: Float) {
@@ -105,20 +99,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnStart.setOnClickListener {
-            val saveData = false
-            val baseFileName = "aos_"
+            val saveData = true
+            JupiterDataManager.setServiceStartTime(TJLabsUtilFunctions.getCurrentTimeInMilliseconds())
+            JupiterDataManager.addEvent(
+                application,
+                userId,
+                JupiterDataManager.JupiterEventCode.START_SERVICE
+            )
 
             rfdGenerator.generateRfd(
-                1000,
-                1000,
                 -100,
                 -40,
-                getPressure = { 0f },
+                getPressure = { pressure },
                 isSaveData = saveData,
-                fileName = "aos_ble",
                 object : RFDGenerator.RFDCallback {
                     override fun onRfdResult(rfd: ReceivedForce) {
-                        Log.d("BLETimerListener", "rfd : $rfd")
+                        Log.d("CheckJsonData", "rfd : $rfd")
                     }
 
                     override fun onRfdError(code: Int, msg: String) {
@@ -135,13 +131,13 @@ class MainActivity : AppCompatActivity() {
             uvdGenerator.generateUvd(
                 maxPDRStepLength = 0.7f,
                 isSaveData = saveData,
-                fileName = "aos_sensor",
                 callback = object : UVDGenerator.UVDCallback {
                     override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                        Log.d("UVDResult", "mode : $mode // uvd : $uvd")
+                        Log.d("CheckJsonData", "mode : $mode // uvd : $uvd")
                     }
 
                     override fun onPressureResult(hPa: Float) {
+                        pressure = hPa
                     }
 
                     override fun onVelocityResult(kmPh: Float) {
@@ -163,6 +159,11 @@ class MainActivity : AppCompatActivity() {
         btnStop.setOnClickListener {
             rfdGenerator.stopRfdGeneration()
             uvdGenerator.stopUvdGeneration()
+            JupiterDataManager.addEvent(
+                application,
+                userId,
+                JupiterDataManager.JupiterEventCode.STOP_SERVICE
+            )
         }
     }
 
