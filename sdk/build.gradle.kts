@@ -6,7 +6,7 @@ plugins {
 
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 13
+val versionPatch = 14
 
 android {
     namespace = "com.tjlabs.tjlabscommon_sdk_android"
@@ -43,7 +43,6 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx.v131)
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
