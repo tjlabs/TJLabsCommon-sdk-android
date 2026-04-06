@@ -156,7 +156,7 @@ class UVDGenerator(private val application: Application, private val userId : St
         return JupiterDataFunctions.loadSensorData(application, fileName)
     }
 
-    internal fun generateSimulationUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
+    fun generateSimulationUvd(defaultPDRStepLength: Float = tjLabsPdrDistanceEstimator.getDefaultStepLength(),
                               minPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMinStepLength(),
                               maxPDRStepLength : Float = tjLabsPdrDistanceEstimator.getMaxStepLength(),
                               baseFileName : String,

@@ -183,7 +183,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
         return JupiterDataFunctions.loadBleData(application, fileName)
     }
 
-    internal fun generateSimulationRfd(
+    fun generateSimulationRfd(
         rfdIntervalMillis: Long = 500,
         bleScanWindowTimeMillis: Long = 1000,
         minRssiThreshold: Int = -100,
