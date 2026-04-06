@@ -42,12 +42,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.opencsv)
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
     implementation(libs.androidx.core.ktx.v131)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
