@@ -39,6 +39,12 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
@@ -53,7 +59,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.tjlabs"
+                groupId = "com.github.tjlabs"
                 artifactId = "TJLabsCommon-sdk-android"
                 version = "$versionMajor.$versionMinor.$versionPatch"
             }
