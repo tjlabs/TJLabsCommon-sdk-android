@@ -128,10 +128,17 @@ class RFDGenerator(private val application: Application, val userId : String = "
         tjLabsBluetoothManager.setMaxRssiThreshold(maxRssiThreshold)
 
         if (isBleScanAvailable()) {
-            tjLabsBluetoothManager.startScan()
+            val (isStartSuccess, startMessage) = tjLabsBluetoothManager.startScan()
+            if (!isStartSuccess) {
+                callback.onRfdError(RFDErrorCode.PERMISSION_DENIED, startMessage)
+            }
         } else {
             tjLabsBluetoothManager.stopScan()
             this@RFDGenerator.bleScanInfoSet.clear()
+            callback.onRfdError(
+                RFDErrorCode.PERMISSION_DENIED,
+                "BLE scan is unavailable. Check Bluetooth state and required permissions."
+            )
         }
 
         //bleManager 에서 scan 결과가 나온 것을 0.5초마다 평균하여 콜백함..

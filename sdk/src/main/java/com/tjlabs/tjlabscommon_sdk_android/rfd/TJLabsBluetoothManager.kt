@@ -60,27 +60,40 @@ internal class TJLabsBluetoothManager(private val context: Context) {
      * 퍼미션 검사
      */
     fun checkPermissions() : Pair<Boolean, String> {
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT
-            )
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val hasBlePermissions =
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+
+            val hasFineLocation =
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasCoarseLocation =
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasLocationPermission = hasFineLocation || hasCoarseLocation
+
+            if (!hasBlePermissions) {
+                Pair(false, "Required BLE permissions(BLUETOOTH_SCAN/CONNECT) are not granted.")
+            } else if (!hasLocationPermission) {
+                Pair(false, "Location permission(ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION) is required.")
+            } else {
+                Pair(true, "")
+            }
         } else {
-            arrayOf(
+            val permissions = arrayOf(
                 Manifest.permission.BLUETOOTH,
                 Manifest.permission.BLUETOOTH_ADMIN,
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
-        }
 
-        val hasPermissions = permissions.all {
-            ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
+            val hasPermissions = permissions.all {
+                ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            }
 
-        return if (!hasPermissions) {
-            Pair(false, "Required permissions are not granted.")
-        } else{
-            Pair(true, "")
+            if (!hasPermissions) {
+                Pair(false, "Required permissions are not granted.")
+            } else {
+                Pair(true, "")
+            }
         }
     }
 
@@ -121,8 +134,14 @@ internal class TJLabsBluetoothManager(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startScan() : Pair<Boolean, String> {
-        bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallbackClass)
-        return Pair(true, "Success Start Scan")
+        return try {
+            bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallbackClass)
+            Pair(true, "Success Start Scan")
+        } catch (e: SecurityException) {
+            Pair(false, "Failed to start scan due to missing permission: ${e.message}")
+        } catch (e: Exception) {
+            Pair(false, "Failed to start scan: ${e.message}")
+        }
     }
 
     fun stopScan(restart : Boolean = false) : Pair<Boolean, String> {
