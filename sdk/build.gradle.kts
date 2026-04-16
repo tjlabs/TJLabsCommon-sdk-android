@@ -6,7 +6,7 @@ plugins {
 
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 14
+val versionPatch = 15
 
 android {
     namespace = "com.tjlabs.tjlabscommon_sdk_android"
@@ -15,6 +15,7 @@ android {
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
