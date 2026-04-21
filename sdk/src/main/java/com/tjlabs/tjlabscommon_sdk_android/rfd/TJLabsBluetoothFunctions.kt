@@ -1,6 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.rfd
 
-import android.util.Log
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 
 internal object TJLabsBluetoothFunctions {
     fun removeBleScanInfoSetOlderThan(bleScanInfoSet: MutableSet<BLEScanInfo>, elapsedRealtimeNano: Long) : MutableSet<BLEScanInfo> {
@@ -24,7 +24,7 @@ internal object TJLabsBluetoothFunctions {
                 val count = infoList.size
                 val total = infoList.sumOf { it.rssi }
                 val average = if (count > 0) total.toFloat() / count else 0f
-                Log.d(
+                TJLabsCommonLog.d(
                     "TJLabsBluetoothFunctions",
                     "BLE ID: $id | count: $count | total RSSI: $total | average RSSI: $average | rssi list : ${infoList.map { it.rssi }}"
                 )
@@ -35,7 +35,7 @@ internal object TJLabsBluetoothFunctions {
             averageMap = rssiClassMap.map { it.key to (it.value.getAverage()).toFloat() }.toMap()
 
         } catch (e: Exception) {
-            Log.e("TJLabsBluetoothFunctions", "error, average BLE Scan Info", e)
+            TJLabsCommonLog.e("TJLabsBluetoothFunctions", "error, average BLE Scan Info", e)
         }
 
         return averageMap

@@ -8,13 +8,13 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.os.SystemClock
-import android.util.Log
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.bleMutableList
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.bleSimulationIndex
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.loadRfdJsonData
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.parseStringToMap
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.saveRfdResultAsJson
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Timer
 import java.util.TimerTask
@@ -211,7 +211,6 @@ class RFDGenerator(private val application: Application, val userId : String = "
             timer.schedule(object : TimerTask() {
                 override fun run() {
                     if (bleSimulationIndex < bleMutableList.size) {
-                        Log.d("CheckFileData", "rfd change")
                         val index = bleSimulationIndex % bleMutableList.size
                         val element = bleMutableList[index]
                         val averageBleMap = parseStringToMap(element)
@@ -323,7 +322,6 @@ class RFDGenerator(private val application: Application, val userId : String = "
         tjLabsBluetoothManager.stopScan()
         // TODO() stopScan 리턴 활용하기
         bleScanInfoSet.clear()
-        Log.d("CheckBLERestart", "stop scan")
     }
 
     fun checkRfdException(callback: RFDCallback){

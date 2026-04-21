@@ -1,6 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.pdr
 
-import android.util.Log
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.exponentialMovingAverage
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.l2Normalize
 import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorData
@@ -186,7 +186,6 @@ internal class TJLabsPDRDistanceEstimator
     }
 
     private fun checkNormalStep(normalStepCount: Int, normalStepCountSet: Int = NORMAL_STEP_COUNT_SET): Boolean {
-        Log.d("CheckNormalStep", "normalStepCount : $normalStepCount // normalStepCountSet : $normalStepCountSet")
         return normalStepCount >= normalStepCountSet
     }
 
@@ -197,5 +196,4 @@ internal class TJLabsPDRDistanceEstimator
     }
 
 }
-
 

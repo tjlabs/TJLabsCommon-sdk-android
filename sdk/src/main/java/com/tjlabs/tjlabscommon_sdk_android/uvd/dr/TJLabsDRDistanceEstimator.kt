@@ -1,6 +1,6 @@
 package com.tjlabs.tjlabscommon_sdk_android.uvd.dr
 
-import android.util.Log
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calPitchUsingAcc
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRMS
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions.calRollUsingAcc
@@ -229,7 +229,7 @@ internal class TJLabsDRDistanceEstimator {
 
         count ++
         if (count > 10) {
-            Log.d("CheckVelocity", "final vel : ${finalUnitResult.velocity} // raw velocity smooth : $velocitySmoothing // scale : ${velocityScale} // ent scale : $entranceVelocityScale //  turn scale : $turnScale // rflow : $rflowScale // isSufficientRfdBuffer : $isSufficientRfdBuffer // drState : $drState")
+            TJLabsCommonLog.d("CheckVelocity", "final vel : ${finalUnitResult.velocity} // raw velocity smooth : $velocitySmoothing // scale : ${velocityScale} // ent scale : $entranceVelocityScale //  turn scale : $turnScale // rflow : $rflowScale // isSufficientRfdBuffer : $isSufficientRfdBuffer // drState : $drState")
             count = 0
         }
 
