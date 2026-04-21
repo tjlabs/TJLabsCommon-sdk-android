@@ -1,0 +1,152 @@
+name: Release JitPack
+
+on:
+  push:
+    branches:
+      - 'release/*'
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version (x.y.z). Optional when running on release/x.y.z branch.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      LIB_MODULE: sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          input_version="${{ github.event.inputs.release_version || '' }}"
+          branch_name="${GITHUB_REF#refs/heads/}"
+
+          if [[ -n "$input_version" ]]; then
+            release_version="$input_version"
+          else
+            if [[ "$branch_name" =~ ^release/([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              release_version="${BASH_REMATCH[1]}"
+            else
+              echo "Unable to resolve release version from branch: $branch_name"
+              exit 1
+            fi
+          fi
+
+          if [[ ! "$release_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release version format: $release_version"
+            exit 1
+          fi
+
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
+          echo "Resolved release_version=$release_version"
+
+      - name: Validate module version matches release version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          module_file=""
+          if [[ -f "${LIB_MODULE}/build.gradle.kts" ]]; then
+            module_file="${LIB_MODULE}/build.gradle.kts"
+          elif [[ -f "${LIB_MODULE}/build.gradle" ]]; then
+            module_file="${LIB_MODULE}/build.gradle"
+          else
+            echo "Cannot find build.gradle(.kts) under ${LIB_MODULE}"
+            exit 1
+          fi
+
+          major=$(grep -E '^[[:space:]]*(val|def)[[:space:]]+versionMajor[[:space:]]*=' "$module_file" | head -n1 | grep -Eo '[0-9]+' | head -n1 || true)
+          minor=$(grep -E '^[[:space:]]*(val|def)[[:space:]]+versionMinor[[:space:]]*=' "$module_file" | head -n1 | grep -Eo '[0-9]+' | head -n1 || true)
+          patch=$(grep -E '^[[:space:]]*(val|def)[[:space:]]+versionPatch[[:space:]]*=' "$module_file" | head -n1 | grep -Eo '[0-9]+' | head -n1 || true)
+
+          module_version=""
+          if [[ -n "$major" && -n "$minor" && -n "$patch" ]]; then
+            module_version="${major}.${minor}.${patch}"
+          else
+            version_line=$(grep -E '^[[:space:]]*version[[:space:]]*=' "$module_file" | head -n1 || true)
+            module_version=$(echo "$version_line" | sed -nE 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/p')
+          fi
+
+          if [[ -z "$module_version" ]]; then
+            echo "Unable to parse module version from ${module_file}"
+            exit 1
+          fi
+
+          release_version="${{ steps.version.outputs.release_version }}"
+          echo "module_version=$module_version"
+          echo "release_version=$release_version"
+
+          if [[ "$module_version" != "$release_version" ]]; then
+            echo "Version mismatch: module=${module_version}, release=${release_version}"
+            exit 1
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests (debug/release)
+        run: ./gradlew :${LIB_MODULE}:testDebugUnitTest :${LIB_MODULE}:testReleaseUnitTest --stacktrace --no-daemon
+
+      - name: Publish check
+        run: ./gradlew :${LIB_MODULE}:publishToMavenLocal -x test --stacktrace --no-daemon
+
+      - name: Create and push tag if missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_version="${{ steps.version.outputs.release_version }}"
+
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/${release_version}" >/dev/null; then
+            echo "Tag ${release_version} already exists"
+          else
+            git tag "${release_version}"
+            git push origin "${release_version}"
+            echo "Created tag ${release_version}"
+          fi
+
+      - name: Warm up JitPack build log
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_version="${{ steps.version.outputs.release_version }}"
+          owner="${GITHUB_REPOSITORY%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+
+          build_log_url="https://jitpack.io/com/github/${owner}/${repo}/${release_version}/build.log"
+          warmup_url="https://jitpack.io/com/github/${owner}/${repo}/${release_version}/${repo}-${release_version}.pom"
+
+          echo "build_log_url=${build_log_url}" | tee jitpack-build-url.txt
+          echo "warmup_url=${warmup_url}" | tee jitpack-warmup-url.txt
+
+          curl -L --fail-with-body "$warmup_url" -o jitpack-warmup-response.txt || true
+          curl -L "$build_log_url" -o jitpack-build.log || true
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-jitpack-logs-${{ steps.version.outputs.release_version }}
+          path: |
+            jitpack-build-url.txt
+            jitpack-warmup-url.txt
+            jitpack-warmup-response.txt
+            jitpack-build.log
