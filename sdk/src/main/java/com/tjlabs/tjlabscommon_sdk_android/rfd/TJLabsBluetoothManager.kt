@@ -15,7 +15,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Collections
@@ -62,8 +61,7 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     fun checkPermissions() : Pair<Boolean, String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val hasBlePermissions =
-                ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
 
             val hasFineLocation =
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -72,7 +70,7 @@ internal class TJLabsBluetoothManager(private val context: Context) {
             val hasLocationPermission = hasFineLocation || hasCoarseLocation
 
             if (!hasBlePermissions) {
-                Pair(false, "Required BLE permissions(BLUETOOTH_SCAN/CONNECT) are not granted.")
+                Pair(false, "Required BLE permission(BLUETOOTH_SCAN) is not granted.")
             } else if (!hasLocationPermission) {
                 Pair(false, "Location permission(ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION) is required.")
             } else {
