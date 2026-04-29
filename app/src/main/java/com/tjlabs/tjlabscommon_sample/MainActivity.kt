@@ -12,6 +12,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
+import com.tjlabs.tjlabscommon_sdk_android.rfd.ScanMode
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataManager
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UVDGenerator
@@ -105,7 +106,7 @@ class MainActivity : AppCompatActivity() {
                 userId,
                 JupiterDataManager.JupiterEventCode.START_SERVICE
             )
-
+            rfdGenerator.setScanMode(ScanMode.WARD_SEI_SCAN)
             rfdGenerator.generateRfd(
                 -100,
                 -40,
