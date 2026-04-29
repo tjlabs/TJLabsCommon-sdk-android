@@ -41,10 +41,43 @@ class RFDGenerator(private val application: Application, val userId : String = "
     private val bleScanWindowTimeMillis = 1000L
 
     init {
+        setSeiScanSpec()
         setScanMode(ScanMode.ONLY_WARD_SCAN)
     }
 
+    fun setSeiScanSpec(
+        beaconNamePrefix: String = TJLabsBluetoothManager.DEFAULT_SEI_BEACON_NAME_PREFIX
+    ) {
+        tjLabsBluetoothManager.setSeiScanSpec(beaconNamePrefix)
+    }
+
+    fun setWardScanSpec(serviceUuid: String? = TJLabsBluetoothManager.TJLABS_WARD_UUID) {
+        tjLabsBluetoothManager.setWardScanSpec(serviceUuid)
+    }
+
+    fun setWardSeiScanSpec(
+        wardServiceUuid: String? = TJLabsBluetoothManager.TJLABS_WARD_UUID,
+        seiBeaconNamePrefix: String = TJLabsBluetoothManager.DEFAULT_SEI_BEACON_NAME_PREFIX
+    ) {
+        tjLabsBluetoothManager.setWardSeiScanSpec(
+            wardServiceUuid = wardServiceUuid,
+            seiBeaconNamePrefix = seiBeaconNamePrefix
+        )
+    }
+
+    fun configureWardSeiScan(
+        wardServiceUuid: String? = TJLabsBluetoothManager.TJLABS_WARD_UUID,
+        seiBeaconNamePrefix: String = TJLabsBluetoothManager.DEFAULT_SEI_BEACON_NAME_PREFIX
+    ) {
+        setWardSeiScanSpec(
+            wardServiceUuid = wardServiceUuid,
+            seiBeaconNamePrefix = seiBeaconNamePrefix
+        )
+        setScanMode(ScanMode.WARD_SEI_SCAN)
+    }
+
     fun setScanMode(scanMode: ScanMode) {
+        tjLabsBluetoothManager.setScanMode(scanMode)
         val scanFilters = when (scanMode) {
             ScanMode.NO_FILTER_SCAN -> listOf()
             ScanMode.ONLY_WARD_SCAN -> listOf(
