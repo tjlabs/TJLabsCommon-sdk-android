@@ -14,9 +14,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelUuid
 import android.os.SystemClock
+import android.util.Log
 import androidx.core.app.ActivityCompat
-import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Collections
 import java.util.HashSet
 
@@ -54,7 +55,13 @@ internal class TJLabsBluetoothManager(private val context: Context) {
 
     companion object{
         const val TJLABS_WARD_UUID = "0000feaa-0000-1000-8000-00805f9b34fb"
+        const val DEFAULT_SEI_BEACON_NAME_PREFIX = "NI-011-0000"
+        const val DEFAULT_IBEACON_NAME_KEYWORD = "TJ-00CB"
     }
+    private var scanMode: ScanMode = ScanMode.ONLY_WARD_SCAN
+    private var wardServiceParcelUuid: ParcelUuid? = parseParcelUuidOrNull(TJLABS_WARD_UUID)
+    private var seiBeaconNamePrefix: String = DEFAULT_SEI_BEACON_NAME_PREFIX
+    private var iBeaconNameKeyword: String = DEFAULT_IBEACON_NAME_KEYWORD
     /**
      * 퍼미션 검사
      */
@@ -116,6 +123,30 @@ internal class TJLabsBluetoothManager(private val context: Context) {
      */
     fun setScanFilters(filters: List<ScanFilter>) {
         scanFilters = filters
+    }
+
+    fun setScanMode(scanMode: ScanMode) {
+        this.scanMode = scanMode
+    }
+
+    fun setWardScanSpec(serviceUuid: String? = TJLABS_WARD_UUID) {
+        wardServiceParcelUuid = parseParcelUuidOrNull(serviceUuid)
+    }
+
+    fun setSeiScanSpec(beaconNamePrefix: String = DEFAULT_SEI_BEACON_NAME_PREFIX) {
+        seiBeaconNamePrefix = beaconNamePrefix
+    }
+
+    fun setWardSeiScanSpec(
+        wardServiceUuid: String? = TJLABS_WARD_UUID,
+        seiBeaconNamePrefix: String = DEFAULT_SEI_BEACON_NAME_PREFIX
+    ) {
+        setWardScanSpec(wardServiceUuid)
+        setSeiScanSpec(seiBeaconNamePrefix)
+    }
+
+    fun setIBeaconScanSpec(nameKeyword: String = DEFAULT_IBEACON_NAME_KEYWORD) {
+        iBeaconNameKeyword = nameKeyword
     }
 
     fun setMinRssiThreshold(threshold : Int = -100) {
@@ -197,7 +228,9 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     inner class ScanCallbackClass : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             result.scanRecord?.let{ scanRecord ->
+                Log.d("CheckScanResult", "scanRecord : $scanRecord")
                 if ((minRssiThreshold < result.rssi) && (result.rssi < maxRssiThreshold)) {
+                    if (!isScanModeMatched(scanRecord)) return
                     scanRecord.deviceName?.let{deviceName ->
                         synchronized(bleScanInfoSet){
                             bleScanInfoSet.add(BLEScanInfo(deviceName, result.rssi, result.timestampNanos))
@@ -208,6 +241,50 @@ internal class TJLabsBluetoothManager(private val context: Context) {
         }
 
         override fun onBatchScanResults(results: List<ScanResult>) {
+        }
+    }
+
+    private fun isScanModeMatched(scanRecord: android.bluetooth.le.ScanRecord): Boolean {
+        return when (scanMode) {
+            ScanMode.NO_FILTER_SCAN -> true
+            ScanMode.ONLY_WARD_SCAN -> hasServiceUuid(scanRecord, wardServiceParcelUuid)
+            ScanMode.ONLY_SEI_SCAN -> isSeiMatched(scanRecord)
+            ScanMode.WARD_SEI_SCAN -> {
+                hasServiceUuid(scanRecord, wardServiceParcelUuid) || isSeiMatched(scanRecord)
+            }
+            ScanMode.ONLY_IBEACON_SCAN -> isIBeaconMatched(scanRecord)
+        }
+    }
+
+    private fun isSeiMatched(scanRecord: android.bluetooth.le.ScanRecord): Boolean {
+        return scanRecord.deviceName?.startsWith(seiBeaconNamePrefix) == true
+    }
+
+    private fun isIBeaconMatched(scanRecord: android.bluetooth.le.ScanRecord): Boolean {
+        val isIBeaconFrame = hasIBeaconManufacturerData(scanRecord)
+        val isNameMatched = scanRecord.deviceName?.contains(iBeaconNameKeyword) == true
+        return isIBeaconFrame && isNameMatched
+    }
+
+    private fun hasIBeaconManufacturerData(scanRecord: android.bluetooth.le.ScanRecord): Boolean {
+        val manufacturerData = scanRecord.manufacturerSpecificData ?: return false
+        // Apple company ID (0x004C) + iBeacon prefix (0x02, 0x15)
+        val appleData = manufacturerData.get(0x004C) ?: return false
+        if (appleData.size < 2) return false
+        return appleData[0] == 0x02.toByte() && appleData[1] == 0x15.toByte()
+    }
+
+    private fun hasServiceUuid(scanRecord: android.bluetooth.le.ScanRecord, target: ParcelUuid?): Boolean {
+        if (target == null) return false
+        return scanRecord.serviceUuids?.contains(target) == true ||
+                scanRecord.serviceData?.keys?.contains(target) == true
+    }
+
+    private fun parseParcelUuidOrNull(uuid: String?): ParcelUuid? {
+        return try {
+            if (uuid.isNullOrBlank()) null else ParcelUuid.fromString(uuid)
+        } catch (_: IllegalArgumentException) {
+            null
         }
     }
 }

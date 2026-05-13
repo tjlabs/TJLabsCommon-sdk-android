@@ -28,7 +28,7 @@ internal data class RSSIClass(
 }
 
 enum class ScanMode{
-    NO_FILTER_SCAN, ONLY_WARD_SCAN, ONLY_SEI_SCAN, WARD_SEI_SCAN
+    NO_FILTER_SCAN, ONLY_WARD_SCAN, ONLY_SEI_SCAN, WARD_SEI_SCAN, ONLY_IBEACON_SCAN
 }
 
 object RFDErrorCode {
