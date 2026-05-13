@@ -5,8 +5,8 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 
 object JupiterDataManager {
     enum class JupiterEventCode(val code: Int) {
-        START_SERVICE(0),
-        STOP_SERVICE(1)
+        START_SERVICE(1),
+        STOP_SERVICE(0)
     }
 
     fun setServiceStartTime(timeMillis: Long){

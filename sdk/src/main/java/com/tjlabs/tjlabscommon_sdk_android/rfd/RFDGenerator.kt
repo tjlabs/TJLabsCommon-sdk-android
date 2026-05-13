@@ -76,6 +76,12 @@ class RFDGenerator(private val application: Application, val userId : String = "
         setScanMode(ScanMode.WARD_SEI_SCAN)
     }
 
+    fun setIBeaconScanSpec(
+        nameKeyword: String = TJLabsBluetoothManager.DEFAULT_IBEACON_NAME_KEYWORD
+    ) {
+        tjLabsBluetoothManager.setIBeaconScanSpec(nameKeyword)
+    }
+
     fun setScanMode(scanMode: ScanMode) {
         tjLabsBluetoothManager.setScanMode(scanMode)
         val scanFilters = when (scanMode) {
@@ -87,6 +93,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
             )
             ScanMode.ONLY_SEI_SCAN -> listOf()
             ScanMode.WARD_SEI_SCAN -> listOf()
+            ScanMode.ONLY_IBEACON_SCAN -> listOf()
         }
         tjLabsBluetoothManager.setScanFilters(scanFilters)
     }

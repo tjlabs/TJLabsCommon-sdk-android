@@ -5,11 +5,20 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
-import androidx.activity.enableEdgeToEdge
+import android.widget.Spinner
+import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ScanMode
@@ -18,10 +27,19 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UVDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserMode
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var rfdGenerator: RFDGenerator
     private lateinit var uvdGenerator: UVDGenerator
+    private lateinit var spinnerScanMode: Spinner
+    private lateinit var tvStatus: TextView
+    private lateinit var tvUvdLatest: TextView
+    private lateinit var rvRfdResults: RecyclerView
+    private lateinit var switchSaveData: SwitchCompat
+    private lateinit var rfdAdapter: RfdScanAdapter
 
     private val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -39,101 +57,113 @@ class MainActivity : AppCompatActivity() {
 
     private val multiplePermissionsCode = 100
     private var pressure = 0f
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         checkPermissions()
         setContentView(R.layout.activity_main)
 
         val btnStart = findViewById<Button>(R.id.btnStart)
         val btnStop = findViewById<Button>(R.id.btnStop)
         val btnStartSimul = findViewById<Button>(R.id.btnStartSimul)
+        spinnerScanMode = findViewById(R.id.spinnerScanMode)
+        tvStatus = findViewById(R.id.tvStatus)
+        tvUvdLatest = findViewById(R.id.tvUvdLatest)
+        rvRfdResults = findViewById(R.id.rvRfdResults)
+        switchSaveData = findViewById(R.id.switchSaveData)
+
+        val modeNames = ScanMode.values().map { it.name }
+        spinnerScanMode.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modeNames)
+        spinnerScanMode.setSelection(modeNames.indexOf(ScanMode.WARD_SEI_SCAN.name))
+
+        rfdAdapter = RfdScanAdapter()
+        rvRfdResults.layoutManager = LinearLayoutManager(this)
+        rvRfdResults.adapter = rfdAdapter
+
         val userId = "temp"
         val initStartTime = 1775451068715L
         rfdGenerator = RFDGenerator(application, userId)
         uvdGenerator = UVDGenerator(application, userId)
 
         btnStartSimul.setOnClickListener {
-            Log.d("CheckJsonData", "start")
             rfdGenerator.generateSimulationRfdFromJson(
                 userId,
                 initStartTime.toString(),
                 callback = object : RFDGenerator.RFDCallback {
                     override fun onRfdResult(rfd: ReceivedForce) {
-                        Log.d("CheckJsonData(sim)", "rfd : $rfd")
+                        Log.d("MainActivity", "sim rfd : $rfd")
+                        updateRfdRows(rfd)
                     }
 
                     override fun onRfdError(code: Int, msg: String) {
+                        updateStatus("Simulation RFD error: $msg")
                     }
 
-                    override fun onRfdEmptyMillis(time: Long) {
-                    }
+                    override fun onRfdEmptyMillis(time: Long) = Unit
                 }
             )
+
             uvdGenerator.setUserMode(UserMode.MODE_AUTO)
             uvdGenerator.generateSimulationUvdFromJson(
                 userId,
                 initStartTime.toString(),
                 callback = object : UVDGenerator.UVDCallback {
                     override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                        Log.d("CheckJsonData(sim)", "mode : $mode // uvd : $uvd")
+                        updateUvdLatest(mode, uvd)
                     }
 
                     override fun onPressureResult(hPa: Float) {
                         pressure = hPa
                     }
 
-                    override fun onVelocityResult(kmPh: Float) {
-                    }
-
-                    override fun onMagNormSmoothingVarResult(value: Float) {
-                    }
-
-                    override fun onUvdPauseMillis(time: Long) {
-                    }
-
-                    override fun onUvdError(error: String) {
-                    }
+                    override fun onVelocityResult(kmPh: Float) = Unit
+                    override fun onMagNormSmoothingVarResult(value: Float) = Unit
+                    override fun onUvdPauseMillis(time: Long) = Unit
+                    override fun onUvdError(error: String) = Unit
                 }
             )
+            updateStatus("Simulation started")
         }
 
         btnStart.setOnClickListener {
-            val saveData = true
+            val saveData = switchSaveData.isChecked
+            val selectedMode = ScanMode.values()[spinnerScanMode.selectedItemPosition]
+
             JupiterDataManager.setServiceStartTime(TJLabsUtilFunctions.getCurrentTimeInMilliseconds())
             JupiterDataManager.addEvent(
                 application,
                 userId,
                 JupiterDataManager.JupiterEventCode.START_SERVICE
             )
-            rfdGenerator.setScanMode(ScanMode.WARD_SEI_SCAN)
+
+            rfdGenerator.setScanMode(selectedMode)
             rfdGenerator.generateRfd(
                 -100,
                 -40,
                 getPressure = { pressure },
                 isSaveData = saveData,
-                object : RFDGenerator.RFDCallback {
+                callback = object : RFDGenerator.RFDCallback {
                     override fun onRfdResult(rfd: ReceivedForce) {
-                        Log.d("CheckJsonData", "rfd : $rfd")
+                        updateRfdRows(rfd)
                     }
 
                     override fun onRfdError(code: Int, msg: String) {
-                        Log.d("BLETimerListener", "error : $msg")
+                        updateStatus("RFD error: $msg")
                     }
 
-                    override fun onRfdEmptyMillis(time: Long) {
-                        Log.d("BLETimerListener", "time : $time")
-                    }
+                    override fun onRfdEmptyMillis(time: Long) = Unit
                 }
             )
 
-            uvdGenerator.setUserMode(UserMode.MODE_PEDESTRIAN)
+            uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
             uvdGenerator.generateUvd(
                 maxPDRStepLength = 0.7f,
                 isSaveData = saveData,
                 callback = object : UVDGenerator.UVDCallback {
                     override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                        Log.d("CheckJsonData", "mode : $mode // uvd : $uvd")
+                        updateUvdLatest(mode, uvd)
                     }
 
                     override fun onPressureResult(hPa: Float) {
@@ -141,19 +171,18 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     override fun onVelocityResult(kmPh: Float) {
-                        Log.d("UVDVelocityResult", "kmPh : $kmPh")
+                        Log.d("MainActivity", "velocity(kmPh): $kmPh")
                     }
 
-                    override fun onMagNormSmoothingVarResult(value: Float) {
-                    }
-
-                    override fun onUvdPauseMillis(time: Long) {
-                    }
+                    override fun onMagNormSmoothingVarResult(value: Float) = Unit
+                    override fun onUvdPauseMillis(time: Long) = Unit
 
                     override fun onUvdError(error: String) {
+                        updateStatus("UVD error: $error")
                     }
                 }
             )
+            updateStatus("RFD/UVD started (${selectedMode.name}, save=$saveData)")
         }
 
         btnStop.setOnClickListener {
@@ -164,6 +193,36 @@ class MainActivity : AppCompatActivity() {
                 userId,
                 JupiterDataManager.JupiterEventCode.STOP_SERVICE
             )
+            updateStatus("Stopped")
+        }
+    }
+
+    private fun updateStatus(message: String) {
+        runOnUiThread {
+            tvStatus.text = "Status: $message"
+        }
+    }
+
+    private fun updateUvdLatest(mode: UserMode, uvd: UserVelocity) {
+        runOnUiThread {
+            tvUvdLatest.text =
+                "mode=${mode.name}\nindex=${uvd.index}\nlength=${uvd.length}\nheading=${uvd.heading}\nmobile_time=${uvd.mobile_time}"
+        }
+    }
+
+    private fun updateRfdRows(rfd: ReceivedForce) {
+        val rows = rfd.rfs.entries
+            .sortedByDescending { it.value }
+            .map { (name, rssi) ->
+                RfdScanRow(
+                    name = name,
+                    rssi = rssi.toInt(),
+                    scannedAtMillis = rfd.mobile_time
+                )
+            }
+
+        runOnUiThread {
+            rfdAdapter.submit(rows)
         }
     }
 
@@ -182,6 +241,47 @@ class MainActivity : AppCompatActivity() {
                 rejectedPermissionList.toArray(array),
                 multiplePermissionsCode
             )
+        }
+    }
+}
+
+private data class RfdScanRow(
+    val name: String,
+    val rssi: Int,
+    val scannedAtMillis: Long
+)
+
+private class RfdScanAdapter : RecyclerView.Adapter<RfdScanAdapter.RfdScanViewHolder>() {
+    private val items = mutableListOf<RfdScanRow>()
+    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
+
+    fun submit(newItems: List<RfdScanRow>) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RfdScanViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_rfd_scan_result, parent, false)
+        return RfdScanViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: RfdScanViewHolder, position: Int) {
+        holder.bind(items[position], dateFormatter)
+    }
+
+    override fun getItemCount(): Int = items.size
+
+    class RfdScanViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvBeaconName: TextView = itemView.findViewById(R.id.tvBeaconName)
+        private val tvBeaconRssi: TextView = itemView.findViewById(R.id.tvBeaconRssi)
+        private val tvBeaconTime: TextView = itemView.findViewById(R.id.tvBeaconTime)
+
+        fun bind(item: RfdScanRow, formatter: SimpleDateFormat) {
+            tvBeaconName.text = item.name
+            tvBeaconRssi.text = "RSSI: ${item.rssi}"
+            tvBeaconTime.text = "Scanned: ${formatter.format(Date(item.scannedAtMillis))}"
         }
     }
 }
