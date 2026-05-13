@@ -157,7 +157,7 @@ class MainActivity : AppCompatActivity() {
                 }
             )
 
-            uvdGenerator.setUserMode(UserMode.MODE_PEDESTRIAN)
+            uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
             uvdGenerator.generateUvd(
                 maxPDRStepLength = 0.7f,
                 isSaveData = saveData,
