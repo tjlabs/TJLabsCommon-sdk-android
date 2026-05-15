@@ -16,3 +16,7 @@
 
 -keep class com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataManager { public *; }
 -keep class com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataManager$JupiterEventCode { *; }
+
+-keep class com.tjlabs.tjlabscommon_sdk_android.TJLabsErrorCodeManager { *; }
+-keep class com.tjlabs.tjlabscommon_sdk_android.TJLabsErrorCode { public *; }
+-keep enum com.tjlabs.tjlabscommon_sdk_android.TJLabsErrorDomain { *; }
