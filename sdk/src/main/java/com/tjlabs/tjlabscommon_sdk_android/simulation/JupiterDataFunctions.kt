@@ -2,7 +2,10 @@ package com.tjlabs.tjlabscommon_sdk_android.simulation
 
 import android.app.Application
 import android.content.Context.MODE_APPEND
+import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorData
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UserMode
+import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -214,21 +217,20 @@ internal object JupiterDataFunctions {
         app: Application,
         saveFlag: Boolean,
         isBackGround: Boolean,
-        userId: String,
-        mobileTime: Long,
-        pressureHpa: Float,
-        rfs: Map<String, Float>
+        rfd: ReceivedForce
     ) {
         if (!saveFlag || isBackGround) return
         if (saveServiceStartTime.isBlank()) return
 
+        val userId = rfd.tenant_user_name
         val rfdFileName = "android_${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(saveServiceStartTime, "0")}_rfd.json"
-        val rfsBody = rfs.entries.joinToString(",") { (key, value) ->
+        val rfsBody = rfd.rfs.entries.joinToString(",") { (key, value) ->
             "\"${escapeJson(key)}\":${formatNumber(value)}"
         }
-        val jsonLine = "{\"mobile_time\":$mobileTime," +
-            "\"pressure_hpa\":${formatNumber(pressureHpa)}," +
-            "\"rfs\":{$rfsBody}}\n"
+        val jsonLine = "{\"tenant_user_name\":\"${escapeJson(rfd.tenant_user_name)}\"," +
+            "\"mobile_time\":${rfd.mobile_time}," +
+            "\"rfs\":{$rfsBody}," +
+            "\"pressure\":${formatNumber(rfd.pressure)}}\n"
 
         appendJsonLine(app, rfdFileName, jsonLine)
     }
@@ -237,22 +239,21 @@ internal object JupiterDataFunctions {
         app: Application,
         saveFlag: Boolean,
         isBackGround: Boolean,
-        userId: String,
-        mobileTime: Long,
-        mode: String,
-        index: Int,
-        length: Float,
-        heading: Float
+        userMode: UserMode,
+        userVelocity: UserVelocity
     ) {
         if (!saveFlag || isBackGround) return
         if (saveServiceStartTime.isBlank()) return
 
+        val userId = userVelocity.tenant_user_name
         val uvdFileName = "android_${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(saveServiceStartTime, "0")}_uvd.json"
-        val jsonLine = "{\"mobile_time\":$mobileTime," +
-            "\"mode\":\"${escapeJson(mode)}\"," +
-            "\"index\":$index," +
-            "\"length\":${formatNumber(length)}," +
-            "\"heading\":${formatNumber(heading)}}\n"
+        val jsonLine = "{\"tenant_user_name\":\"${escapeJson(userVelocity.tenant_user_name)}\"," +
+            "\"mobile_time\":${userVelocity.mobile_time}," +
+            "\"mode\":\"${escapeJson(userMode.value)}\"," +
+            "\"index\":${userVelocity.index}," +
+            "\"length\":${formatNumber(userVelocity.length)}," +
+            "\"heading\":${formatNumber(userVelocity.heading)}," +
+            "\"looking\":${userVelocity.looking}}\n"
 
         appendJsonLine(app, uvdFileName, jsonLine)
     }
@@ -310,7 +311,11 @@ internal object JupiterDataFunctions {
                 if (trimmed.isNotEmpty()) {
                     val obj = JSONObject(trimmed)
                     val mobileTime = obj.getLong("mobile_time")
-                    val pressureHpa = obj.optDouble("pressure_hpa", 0.0).toFloat()
+                    val pressureHpa = if (obj.has("pressure")) {
+                        obj.optDouble("pressure", 0.0).toFloat()
+                    } else {
+                        obj.optDouble("pressure_hpa", 0.0).toFloat()
+                    }
                     val rfsObj = obj.optJSONObject("rfs") ?: JSONObject()
                     val rfsMap = mutableMapOf<String, Float>()
                     val keys = rfsObj.keys()

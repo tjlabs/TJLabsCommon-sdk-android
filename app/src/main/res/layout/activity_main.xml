@@ -50,11 +50,50 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="User Mode"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/rgUserMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbUserModePdr"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="PDR" />
+
+            <RadioButton
+                android:id="@+id/rbUserModeDr"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="DR" />
+
+            <RadioButton
+                android:id="@+id/rbUserModeAuto"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="AUTO" />
+        </RadioGroup>
+
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/switchSaveData"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:checked="true"
             android:text="Save data (RFD/UVD JSON)"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
 
