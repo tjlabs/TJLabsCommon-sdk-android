@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvUvdLatest: TextView
     private lateinit var rvRfdResults: RecyclerView
     private lateinit var switchSaveData: SwitchCompat
+    private lateinit var rgUserMode: RadioGroup
     private lateinit var rfdAdapter: RfdScanAdapter
 
     private val requiredPermissions =
@@ -72,11 +74,12 @@ class MainActivity : AppCompatActivity() {
         tvUvdLatest = findViewById(R.id.tvUvdLatest)
         rvRfdResults = findViewById(R.id.rvRfdResults)
         switchSaveData = findViewById(R.id.switchSaveData)
+        rgUserMode = findViewById(R.id.rgUserMode)
 
         val modeNames = ScanMode.values().map { it.name }
         spinnerScanMode.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modeNames)
-        spinnerScanMode.setSelection(modeNames.indexOf(ScanMode.WARD_SEI_SCAN.name))
+        spinnerScanMode.setSelection(modeNames.indexOf(ScanMode.ONLY_WARD_SCAN.name))
 
         rfdAdapter = RfdScanAdapter()
         rvRfdResults.layoutManager = LinearLayoutManager(this)
@@ -105,7 +108,8 @@ class MainActivity : AppCompatActivity() {
                 }
             )
 
-            uvdGenerator.setUserMode(UserMode.MODE_AUTO)
+            val selectedUserMode = getSelectedUserMode()
+            uvdGenerator.setUserMode(selectedUserMode)
             uvdGenerator.generateSimulationUvdFromJson(
                 userId,
                 initStartTime.toString(),
@@ -124,12 +128,13 @@ class MainActivity : AppCompatActivity() {
                     override fun onUvdError(error: String) = Unit
                 }
             )
-            updateStatus("Simulation started")
+            updateStatus("Simulation started (${selectedUserMode.name})")
         }
 
         btnStart.setOnClickListener {
             val saveData = switchSaveData.isChecked
             val selectedMode = ScanMode.values()[spinnerScanMode.selectedItemPosition]
+            val selectedUserMode = getSelectedUserMode()
 
             JupiterDataManager.setServiceStartTime(TJLabsUtilFunctions.getCurrentTimeInMilliseconds())
             JupiterDataManager.addEvent(
@@ -157,7 +162,7 @@ class MainActivity : AppCompatActivity() {
                 }
             )
 
-            uvdGenerator.setUserMode(UserMode.MODE_VEHICLE)
+            uvdGenerator.setUserMode(selectedUserMode)
             uvdGenerator.generateUvd(
                 maxPDRStepLength = 0.7f,
                 isSaveData = saveData,
@@ -182,7 +187,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             )
-            updateStatus("RFD/UVD started (${selectedMode.name}, save=$saveData)")
+            updateStatus("RFD/UVD started (${selectedMode.name}, ${selectedUserMode.name}, save=$saveData)")
         }
 
         btnStop.setOnClickListener {
@@ -223,6 +228,14 @@ class MainActivity : AppCompatActivity() {
 
         runOnUiThread {
             rfdAdapter.submit(rows)
+        }
+    }
+
+    private fun getSelectedUserMode(): UserMode {
+        return when (rgUserMode.checkedRadioButtonId) {
+            R.id.rbUserModePdr -> UserMode.MODE_PEDESTRIAN
+            R.id.rbUserModeAuto -> UserMode.MODE_AUTO
+            else -> UserMode.MODE_VEHICLE
         }
     }
 
