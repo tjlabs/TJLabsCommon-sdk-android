@@ -425,17 +425,13 @@ class UVDGenerator(private val application: Application, private val userId : St
         isSaveUvdData = false
     }
 
-    private fun saveUvd(mode: UserMode, uvd: UserVelocity) {
+    private fun saveUvd(userMode : UserMode, uvd: UserVelocity) {
         saveUvdResultAsJson(
             app = application,
             saveFlag = isSaveUvdData,
             isBackGround = isBackGround,
-            userId = userId,
-            mobileTime = uvd.mobile_time,
-            mode = mode.value,
-            index = uvd.index,
-            length = uvd.length,
-            heading = uvd.heading
+            userMode = userMode,
+            userVelocity = uvd
         )
     }
 }

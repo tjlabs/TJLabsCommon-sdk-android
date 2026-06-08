@@ -14,6 +14,7 @@ import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.bleSi
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.loadRfdJsonData
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.parseStringToMap
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.saveRfdResultAsJson
+import com.tjlabs.tjlabscommon_sdk_android.TJLabsErrorCodeManager
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Timer
@@ -205,10 +206,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     app = application,
                     saveFlag = isSaveData,
                     isBackGround = isBackGround,
-                    userId = userId,
-                    mobileTime = rfdResult.mobile_time,
-                    pressureHpa = rfdResult.pressure,
-                    rfs = rfdResult.rfs
+                    rfd = rfdResult
                 )
             }
         }, 0, rfdIntervalMillis)
@@ -275,10 +273,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                             app = application,
                             saveFlag = isSaveData,
                             isBackGround = isBackGround,
-                            userId = userId,
-                            mobileTime = rfdResult.mobile_time,
-                            pressureHpa = rfdResult.pressure,
-                            rfs = rfdResult.rfs
+                            rfd = rfdResult
                         )
                     } else {
                         timer.cancel()
@@ -286,7 +281,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 }
             }, 0, rfdIntervalMillis)
         } else {
-            callback.onRfdError(999, "Load BLE Simulation Data Error!")
+            callback.onRfdError(1502, "Load BLE Simulation Data Error!")
         }
     }
 
@@ -297,13 +292,13 @@ class RFDGenerator(private val application: Application, val userId : String = "
     ) {
         val serviceStartTimeMillis = serviceStartTime.toLongOrNull()
         if (serviceStartTimeMillis == null) {
-            callback.onRfdError(998, "Invalid serviceStartTime. It must be epoch millis.")
+            callback.onRfdError(1204, "Invalid serviceStartTime. It must be epoch millis.")
             return
         }
 
         val records = loadRfdJsonData(application, simulationUserId, serviceStartTime)
         if (records.isEmpty()) {
-            callback.onRfdError(999, "Load RFD JSON Simulation Data Error!")
+            callback.onRfdError(1502, "Load RFD JSON Simulation Data Error!")
             return
         }
 
@@ -369,8 +364,8 @@ class RFDGenerator(private val application: Application, val userId : String = "
         //2. RFD State 가 변하는 것을 감지하고 에러 체크하기?
         //3,,,
         //TODO()
-        val errorCode = 0
-        val errorMsg = "Errorrrrr"
+        val errorCode = TJLabsErrorCodeManager.UNKNOWN.code
+        val errorMsg = TJLabsErrorCodeManager.UNKNOWN.meaning
         callback.onRfdError(errorCode, errorMsg)
     }
 

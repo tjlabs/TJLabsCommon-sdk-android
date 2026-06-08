@@ -32,21 +32,13 @@ enum class ScanMode{
 }
 
 object RFDErrorCode {
-    //RFD Error 1XX
-    //BLE Hardware
-    const val BLUETOOTH_DISABLED = 100
-    const val BLUETOOTH_NOT_SUPPORTED = 101
-    const val AIRPLANE_MODE_ACTIVATION = 102
+    // Unified error code mapping (legacy adapter for existing RFD callback contracts)
+    const val PERMISSION_DENIED = 1600
+    const val BLUETOOTH_DISABLED = 1601
+    const val BLUETOOTH_NOT_SUPPORTED = 1602
+    const val BLE_SCAN_STOP = 1603
+    const val DUPLICATE_SCAN_START = 1604
 
-    //BLE Permission
-    const val PERMISSION_DENIED = 110
-    const val PERMISSION_STATE_CHANGED = 111
-
-    //BLE Scan Result
-    const val SCAN_TIMEOUT = 120
-    const val INVALID_DEVICE_NAME = 121
-    const val INVALID_RSSI = 122
-
-    //RFD Generation Service
-    const val DUPLICATE_SCAN_START = 130
+    // Legacy alias
+    const val SCAN_TIMEOUT = BLE_SCAN_STOP
 }
