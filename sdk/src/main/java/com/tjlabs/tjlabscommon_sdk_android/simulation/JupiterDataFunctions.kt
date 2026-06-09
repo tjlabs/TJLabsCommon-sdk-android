@@ -223,7 +223,7 @@ internal object JupiterDataFunctions {
         if (saveServiceStartTime.isBlank()) return
 
         val userId = rfd.tenant_user_name
-        val rfdFileName = "${normalizeFileToken(userId, "unknown_user")}_rfd.json"
+        val rfdFileName = "${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(saveServiceStartTime, "0")}_rfd.json"
         val rfsBody = rfd.rfs.entries.joinToString(",") { (key, value) ->
             "\"${escapeJson(key)}\":${formatNumber(value)}"
         }
@@ -246,7 +246,7 @@ internal object JupiterDataFunctions {
         if (saveServiceStartTime.isBlank()) return
 
         val userId = userVelocity.tenant_user_name
-        val uvdFileName = "${normalizeFileToken(userId, "unknown_user")}_uvd.json"
+        val uvdFileName = "${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(saveServiceStartTime, "0")}_uvd.json"
         val jsonLine = "{\"tenant_user_name\":\"${escapeJson(userVelocity.tenant_user_name)}\"," +
             "\"mobile_time\":${userVelocity.mobile_time}," +
             "\"mode\":\"${escapeJson(userMode.value)}\"," +
@@ -268,7 +268,7 @@ internal object JupiterDataFunctions {
         if (!saveFlag) return
         if (saveServiceStartTime.isBlank()) return
 
-        val eventFileName = "${normalizeFileToken(userId, "unknown_user")}_event.json"
+        val eventFileName = "${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(saveServiceStartTime, "0")}_event.json"
         val jsonLine = "{\"mobile_time\":$mobileTime," +
                 "\"event_code\":$eventCode}\n"
 
@@ -298,8 +298,8 @@ internal object JupiterDataFunctions {
         return formatted.trimEnd('0').trimEnd('.')
     }
 
-    fun loadRfdJsonData(app: Application, userId: String): List<RfdJsonRecord> {
-        val fileName = "${normalizeFileToken(userId, "unknown_user")}_rfd.json"
+    fun loadRfdJsonData(app: Application, userId: String, serviceStartTime: String): List<RfdJsonRecord> {
+        val fileName = "${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(serviceStartTime, "0")}_rfd.json"
         val records = mutableListOf<RfdJsonRecord>()
         try {
             val fileInputStream: FileInputStream = app.openFileInput(fileName)
@@ -336,8 +336,8 @@ internal object JupiterDataFunctions {
         return records.sortedBy { it.mobileTime }
     }
 
-    fun loadUvdJsonData(app: Application, userId: String): List<UvdJsonRecord> {
-        val fileName = "${normalizeFileToken(userId, "unknown_user")}_uvd.json"
+    fun loadUvdJsonData(app: Application, userId: String, serviceStartTime: String): List<UvdJsonRecord> {
+        val fileName = "${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(serviceStartTime, "0")}_uvd.json"
         val records = mutableListOf<UvdJsonRecord>()
         try {
             val fileInputStream: FileInputStream = app.openFileInput(fileName)

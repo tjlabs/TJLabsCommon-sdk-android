@@ -296,7 +296,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
             return
         }
 
-        val records = loadRfdJsonData(application, simulationUserId)
+        val records = loadRfdJsonData(application, simulationUserId, serviceStartTime)
         if (records.isEmpty()) {
             callback.onRfdError(1502, "Load RFD JSON Simulation Data Error!")
             return
