@@ -210,7 +210,7 @@ class UVDGenerator(private val application: Application, private val userId : St
             return
         }
 
-        val records = loadUvdJsonData(application, simulationUserId, serviceStartTime)
+        val records = loadUvdJsonData(application, simulationUserId)
         if (records.isEmpty()) {
             callback.onUvdError("Load UVD JSON Simulation Data Error!")
             return
