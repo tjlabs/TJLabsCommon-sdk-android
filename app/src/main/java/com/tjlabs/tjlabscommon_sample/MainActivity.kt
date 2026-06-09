@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         rvRfdResults.layoutManager = LinearLayoutManager(this)
         rvRfdResults.adapter = rfdAdapter
 
-        val userId = "temp"
+        val userId = "common_${System.currentTimeMillis()}"
         val initStartTime = 1775451068715L
         rfdGenerator = RFDGenerator(application, userId)
         uvdGenerator = UVDGenerator(application, userId)
