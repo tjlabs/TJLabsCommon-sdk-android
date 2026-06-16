@@ -27,6 +27,7 @@ internal object JupiterDataFunctions {
     var loadRfdData = false
     var loadUvdData = false
     var saveServiceStartTime = ""
+    private var replayEventUserId = ""
 
     internal data class RfdJsonRecord(
         val mobileTime: Long,
@@ -44,6 +45,7 @@ internal object JupiterDataFunctions {
 
     fun setServiceStartTime(time: Long) {
         saveServiceStartTime = time.toString()
+        clearReplayEventFileContext()
     }
 
     fun getServiceStartTime(): String {
@@ -52,6 +54,15 @@ internal object JupiterDataFunctions {
 
     fun clearServiceStartTime() {
         saveServiceStartTime = ""
+        clearReplayEventFileContext()
+    }
+
+    fun setReplayEventFileContext(userId: String) {
+        replayEventUserId = userId
+    }
+
+    fun clearReplayEventFileContext() {
+        replayEventUserId = ""
     }
 
     fun setBaseFileName(fileName: String) {
@@ -267,9 +278,11 @@ internal object JupiterDataFunctions {
         eventInfo : String = ""
     ) {
         if (!saveFlag) return
-        if (saveServiceStartTime.isBlank()) return
+        val eventUserId = replayEventUserId.ifBlank { userId }
+        val eventServiceStartTime = saveServiceStartTime
+        if (eventServiceStartTime.isBlank()) return
 
-        val eventFileName = "${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(saveServiceStartTime, "0")}_event.json"
+        val eventFileName = "${normalizeFileToken(eventUserId, "unknown_user")}_${normalizeFileToken(eventServiceStartTime, "0")}_event.json"
         val jsonLine = "{\"mobile_time\":$mobileTime," +
                 "\"event_code\":$eventCode," +
                 "\"event_info\":\"${escapeJson(eventInfo)}\"}\n"

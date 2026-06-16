@@ -288,6 +288,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
     fun generateSimulationRfdFromJson(
         simulationUserId: String = userId,
         serviceStartTime: String = JupiterDataFunctions.getServiceStartTime(),
+        isSaveData: Boolean = false,
         callback: RFDCallback
     ) {
         val serviceStartTimeMillis = serviceStartTime.toLongOrNull()
@@ -295,6 +296,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
             callback.onRfdError(1204, "Invalid serviceStartTime. It must be epoch millis.")
             return
         }
+        JupiterDataFunctions.setReplayEventFileContext(simulationUserId)
 
         val records = loadRfdJsonData(application, simulationUserId, serviceStartTime)
         if (records.isEmpty()) {
@@ -332,6 +334,18 @@ class RFDGenerator(private val application: Application, val userId : String = "
                     pressure = record.pressureHpa
                 )
                 callback.onRfdResult(rfdResult)
+
+                saveRfdResultAsJson(
+                    app = application,
+                    saveFlag = isSaveData,
+                    isBackGround = isBackGround,
+                    rfd = ReceivedForce(
+                        tenant_user_name = simulationUserId,
+                        mobile_time = System.currentTimeMillis(),
+                        rfs = record.rfs,
+                        pressure = record.pressureHpa
+                    )
+                )
 
                 if (record.rfs.isEmpty()) {
                     callback.onRfdEmptyMillis(System.currentTimeMillis() - rfdGenerationTimeMillis)

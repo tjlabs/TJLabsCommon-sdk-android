@@ -202,6 +202,7 @@ class UVDGenerator(private val application: Application, private val userId : St
     fun generateSimulationUvdFromJson(
         simulationUserId: String = userId,
         serviceStartTime: String = JupiterDataFunctions.getServiceStartTime(),
+        isSaveData: Boolean = false,
         callback: UVDCallback
     ) {
         val serviceStartTimeMillis = serviceStartTime.toLongOrNull()
@@ -209,6 +210,7 @@ class UVDGenerator(private val application: Application, private val userId : St
             callback.onUvdError("Invalid serviceStartTime. It must be epoch millis.")
             return
         }
+        JupiterDataFunctions.setReplayEventFileContext(simulationUserId)
 
         val records = loadUvdJsonData(application, simulationUserId, serviceStartTime)
         if (records.isEmpty()) {
@@ -216,6 +218,7 @@ class UVDGenerator(private val application: Application, private val userId : St
             return
         }
 
+        isSaveUvdData = isSaveData
         simulationRunnable?.let { simulationHandler.removeCallbacks(it) }
         var recordIndex = 0
         val playbackStartElapsed = SystemClock.elapsedRealtime()
@@ -256,6 +259,18 @@ class UVDGenerator(private val application: Application, private val userId : St
                     looking = true
                 )
                 callback.onUvdResult(mode, uvdResult)
+
+                saveUvd(
+                    userMode = mode,
+                    uvd = UserVelocity(
+                        tenant_user_name = simulationUserId,
+                        mobile_time = System.currentTimeMillis(),
+                        index = record.index,
+                        length = record.length,
+                        heading = record.heading,
+                        looking = true
+                    )
+                )
 
                 scheduleNext()
             }
