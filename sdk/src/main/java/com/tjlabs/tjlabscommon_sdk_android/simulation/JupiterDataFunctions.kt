@@ -263,14 +263,16 @@ internal object JupiterDataFunctions {
         saveFlag: Boolean,
         userId: String,
         mobileTime: Long,
-        eventCode: Int
+        eventCode: Int,
+        eventInfo : String = ""
     ) {
         if (!saveFlag) return
         if (saveServiceStartTime.isBlank()) return
 
         val eventFileName = "${normalizeFileToken(userId, "unknown_user")}_${normalizeFileToken(saveServiceStartTime, "0")}_event.json"
         val jsonLine = "{\"mobile_time\":$mobileTime," +
-                "\"event_code\":$eventCode}\n"
+                "\"event_code\":$eventCode," +
+                "\"event_info\":\"${escapeJson(eventInfo)}\"}\n"
 
         appendJsonLine(app, eventFileName, jsonLine)
 

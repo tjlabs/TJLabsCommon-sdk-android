@@ -6,7 +6,9 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 object JupiterDataManager {
     enum class JupiterEventCode(val code: Int) {
         START_SERVICE(1),
-        STOP_SERVICE(0)
+        STOP_SERVICE(0),
+        DETECT_FIRST_RESULT(8),
+        DETECT_RSSI_PEAK(300)
     }
 
     fun setServiceStartTime(timeMillis: Long){
@@ -25,14 +27,15 @@ object JupiterDataManager {
         application: Application,
         userId: String,
         eventCode: JupiterEventCode,
+        eventInfo : String = ""
     ) {
         JupiterDataFunctions.saveEventResultAsJson(
             app = application,
             saveFlag = true,
             userId = userId,
             mobileTime = TJLabsUtilFunctions.getCurrentTimeInMilliseconds(),
-            eventCode = eventCode.code
+            eventCode = eventCode.code,
+            eventInfo = eventInfo
         )
     }
-
 }
