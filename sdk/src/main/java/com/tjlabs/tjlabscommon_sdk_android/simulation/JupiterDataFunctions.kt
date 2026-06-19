@@ -3,6 +3,7 @@ package com.tjlabs.tjlabscommon_sdk_android.simulation
 import android.app.Application
 import android.content.Context.MODE_APPEND
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import com.tjlabs.tjlabscommon_sdk_android.uvd.SensorData
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserMode
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
@@ -91,7 +92,7 @@ internal object JupiterDataFunctions {
             loadRfdData = true
 
         } catch (e: Exception) {
-            e.printStackTrace()
+            TJLabsCommonLog.e("JupiterDataFunctions", "loadBleData failed", e)
         }
         bleMutableList = bleFileContent
         return bleSuccess
@@ -122,7 +123,7 @@ internal object JupiterDataFunctions {
             loadUvdData = true
 
         } catch (e: Exception) {
-            e.printStackTrace()
+            TJLabsCommonLog.e("JupiterDataFunctions", "loadSensorData failed", e)
         }
         sensorMutableList = fileContent
         return sensorSuccess
@@ -346,7 +347,7 @@ internal object JupiterDataFunctions {
             inputStreamReader.close()
             fileInputStream.close()
         } catch (e: Exception) {
-            e.printStackTrace()
+            TJLabsCommonLog.e("JupiterDataFunctions", "loadRfdJsonData failed", e)
         }
         return records.sortedBy { it.mobileTime }
     }
@@ -379,7 +380,7 @@ internal object JupiterDataFunctions {
             inputStreamReader.close()
             fileInputStream.close()
         } catch (e: Exception) {
-            e.printStackTrace()
+            TJLabsCommonLog.e("JupiterDataFunctions", "loadUvdJsonData failed", e)
         }
         return records.sortedBy { it.mobileTime }
     }
