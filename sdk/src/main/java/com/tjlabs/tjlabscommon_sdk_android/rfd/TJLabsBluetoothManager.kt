@@ -16,7 +16,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.os.SystemClock
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import java.util.Collections
 import java.util.HashSet
@@ -228,7 +227,6 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     inner class ScanCallbackClass : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             result.scanRecord?.let{ scanRecord ->
-                Log.d("CheckScanResult", "scanRecord : $scanRecord")
                 if ((minRssiThreshold < result.rssi) && (result.rssi < maxRssiThreshold)) {
                     if (!isScanModeMatched(scanRecord)) return
                     scanRecord.deviceName?.let{deviceName ->
