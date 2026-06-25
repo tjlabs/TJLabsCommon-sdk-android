@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Surfaces -->
+    <color name="surface_background">#0F172A</color>
+    <color name="surface_card">#1E293B</color>
+    <color name="surface_selected">#1E3A8A</color>
+    <!-- surface_preview stays light so trajectory/RFD overlays render with their fixed colors -->
+
+    <!-- Text -->
+    <color name="text_primary">#F1F5F9</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_section">#CBD5E1</color>
+
+    <!-- Brand (primary/danger keep saturation; secondary needs to be lighter for legibility on dark) -->
+    <color name="brand_secondary">#94A3B8</color>
+
+    <color name="divider">#334155</color>
+
+    <!-- Disabled button states need darker bg/stroke and dimmer text on dark surfaces -->
+    <color name="button_disabled_bg">#334155</color>
+    <color name="button_disabled_stroke">#334155</color>
+    <color name="button_disabled_text">#64748B</color>
+    <color name="button_primary_text_disabled">#94A3B8</color>
+</resources>
