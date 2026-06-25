@@ -55,12 +55,19 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     companion object{
         const val TJLABS_WARD_UUID = "0000feaa-0000-1000-8000-00805f9b34fb"
         const val DEFAULT_SEI_BEACON_NAME_PREFIX = "NI-011-0000"
-        const val DEFAULT_IBEACON_NAME_KEYWORD = "TJ-00CB"
+        // Pattern matches names like TJ-00CB, TJ-01CB, TJ-99CB (regex; consumers may pass a
+        // literal substring and it will still work because non-special chars match themselves).
+        const val DEFAULT_IBEACON_NAME_KEYWORD = "TJ-\\d{2}CB"
+
+        private fun compileBeaconRegex(pattern: String): Regex =
+            runCatching { Regex(pattern) }
+                .getOrElse { Regex(Regex.escape(pattern)) }
     }
     private var scanMode: ScanMode = ScanMode.ONLY_WARD_SCAN
     private var wardServiceParcelUuid: ParcelUuid? = parseParcelUuidOrNull(TJLABS_WARD_UUID)
     private var seiBeaconNamePrefix: String = DEFAULT_SEI_BEACON_NAME_PREFIX
     private var iBeaconNameKeyword: String = DEFAULT_IBEACON_NAME_KEYWORD
+    private var iBeaconNameRegex: Regex = compileBeaconRegex(DEFAULT_IBEACON_NAME_KEYWORD)
     /**
      * 퍼미션 검사
      */
@@ -146,6 +153,7 @@ internal class TJLabsBluetoothManager(private val context: Context) {
 
     fun setIBeaconScanSpec(nameKeyword: String = DEFAULT_IBEACON_NAME_KEYWORD) {
         iBeaconNameKeyword = nameKeyword
+        iBeaconNameRegex = compileBeaconRegex(nameKeyword)
     }
 
     fun setMinRssiThreshold(threshold : Int = -100) {
@@ -260,7 +268,8 @@ internal class TJLabsBluetoothManager(private val context: Context) {
 
     private fun isIBeaconMatched(scanRecord: android.bluetooth.le.ScanRecord): Boolean {
         val isIBeaconFrame = hasIBeaconManufacturerData(scanRecord)
-        val isNameMatched = scanRecord.deviceName?.contains(iBeaconNameKeyword) == true
+        val name = scanRecord.deviceName ?: return false
+        val isNameMatched = iBeaconNameRegex.containsMatchIn(name)
         return isIBeaconFrame && isNameMatched
     }
 

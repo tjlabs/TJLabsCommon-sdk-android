@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="AppCard" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/surface_card</item>
+        <item name="cardCornerRadius">@dimen/card_radius</item>
+        <item name="cardElevation">1dp</item>
+        <item name="contentPadding">@dimen/card_padding</item>
+        <item name="android:layout_marginTop">@dimen/space_m</item>
+    </style>
+
+    <style name="SectionTitle" parent="TextAppearance.MaterialComponents.Overline">
+        <item name="android:textColor">@color/text_section</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginBottom">@dimen/space_s</item>
+    </style>
+
+    <style name="AppButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="autoSizeTextType">uniform</item>
+        <item name="autoSizeMinTextSize">@dimen/button_text_min</item>
+        <item name="autoSizeMaxTextSize">@dimen/button_text_max</item>
+        <item name="cornerRadius">@dimen/space_s</item>
+    </style>
+
+    <style name="AppButton.Primary">
+        <item name="backgroundTint">@color/button_primary_bg</item>
+        <item name="android:textColor">@color/button_primary_text</item>
+    </style>
+
+    <style name="AppButton.Danger">
+        <item name="backgroundTint">@color/button_danger_bg</item>
+        <item name="android:textColor">@color/button_primary_text</item>
+    </style>
+
+    <style name="AppButton.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="autoSizeTextType">uniform</item>
+        <item name="autoSizeMinTextSize">@dimen/button_text_min</item>
+        <item name="autoSizeMaxTextSize">@dimen/button_text_max</item>
+        <item name="cornerRadius">@dimen/space_s</item>
+        <item name="strokeColor">@color/button_outlined_stroke</item>
+        <item name="android:textColor">@color/button_outlined_text</item>
+    </style>
+</resources>

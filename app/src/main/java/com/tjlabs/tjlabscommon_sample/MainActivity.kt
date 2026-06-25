@@ -1,25 +1,36 @@
 package com.tjlabs.tjlabscommon_sample
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.WindowManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
-import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tjlabs.tjlabscommon_sample.auth.AuthService
+import com.tjlabs.tjlabscommon_sample.network.ApiServices
+import com.tjlabs.tjlabscommon_sample.network.SectorOption
+import com.tjlabs.tjlabscommon_sample.network.SectorParser
+import com.tjlabs.tjlabscommon_sample.network.TenantApi
+import com.tjlabs.tjlabscommon_sample.preview.PreviewActivity
+import com.tjlabs.tjlabscommon_sample.preview.SessionMeta
+import com.tjlabs.tjlabscommon_sample.preview.SessionMetaStore
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ScanMode
@@ -28,20 +39,46 @@ import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UVDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserMode
 import com.tjlabs.tjlabscommon_sdk_android.uvd.UserVelocity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private const val AUTH_LOG_TAG = "Auth"
+
 class MainActivity : AppCompatActivity() {
-    private lateinit var rfdGenerator: RFDGenerator
-    private lateinit var uvdGenerator: UVDGenerator
+
+    private var rfdGenerator: RFDGenerator? = null
+    private var uvdGenerator: UVDGenerator? = null
+
+    private lateinit var btnAuth: Button
+    private lateinit var btnStart: Button
+    private lateinit var btnStop: Button
+    private lateinit var btnStartSimul: Button
+    private lateinit var btnFiles: Button
     private lateinit var spinnerScanMode: Spinner
+    private lateinit var spinnerSector: Spinner
     private lateinit var tvStatus: TextView
     private lateinit var tvUvdLatest: TextView
     private lateinit var rvRfdResults: RecyclerView
     private lateinit var switchSaveData: SwitchCompat
     private lateinit var rgUserMode: RadioGroup
     private lateinit var rfdAdapter: RfdScanAdapter
+
+    private val tenantApi: TenantApi by lazy {
+        ApiServices.createTenantApi(BuildConfig.USER_BASE_URL)
+    }
+
+    private var sectorOptions: List<SectorOption> = emptyList()
+    private var selectedSector: SectorOption? = null
+
+    private var tenantUserName: String = ""
+    private var serviceStartTime: String = ""
+    private var isAuthed = false
+    private var isRunning = false
+    private var pressure = 0f
 
     private val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -56,9 +93,7 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         }
-
     private val multiplePermissionsCode = 100
-    private var pressure = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,10 +101,13 @@ class MainActivity : AppCompatActivity() {
         checkPermissions()
         setContentView(R.layout.activity_main)
 
-        val btnStart = findViewById<Button>(R.id.btnStart)
-        val btnStop = findViewById<Button>(R.id.btnStop)
-        val btnStartSimul = findViewById<Button>(R.id.btnStartSimul)
+        btnAuth = findViewById(R.id.btnAuth)
+        btnStart = findViewById(R.id.btnStart)
+        btnStop = findViewById(R.id.btnStop)
+        btnStartSimul = findViewById(R.id.btnStartSimul)
+        btnFiles = findViewById(R.id.btnFiles)
         spinnerScanMode = findViewById(R.id.spinnerScanMode)
+        spinnerSector = findViewById(R.id.spinnerSector)
         tvStatus = findViewById(R.id.tvStatus)
         tvUvdLatest = findViewById(R.id.tvUvdLatest)
         rvRfdResults = findViewById(R.id.rvRfdResults)
@@ -79,133 +117,309 @@ class MainActivity : AppCompatActivity() {
         val modeNames = ScanMode.values().map { it.name }
         spinnerScanMode.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modeNames)
-        spinnerScanMode.setSelection(modeNames.indexOf(ScanMode.ONLY_WARD_SCAN.name))
+        spinnerScanMode.setSelection(modeNames.indexOf(ScanMode.ONLY_IBEACON_SCAN.name))
+
+        spinnerSector.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            listOf("(auth first)")
+        )
 
         rfdAdapter = RfdScanAdapter()
         rvRfdResults.layoutManager = LinearLayoutManager(this)
         rvRfdResults.adapter = rfdAdapter
 
-        val userId = "common_${System.currentTimeMillis()}"
-        val initStartTime = 1775451068715L
-        rfdGenerator = RFDGenerator(application, userId)
-        uvdGenerator = UVDGenerator(application, userId)
+        btnAuth.setOnClickListener { performAuth() }
+        btnStart.setOnClickListener { startServices() }
+        btnStop.setOnClickListener { stopServices() }
+        btnStartSimul.setOnClickListener { startSimulation() }
+        btnFiles.setOnClickListener { openFiles() }
 
-        btnStartSimul.setOnClickListener {
-            rfdGenerator.generateSimulationRfdFromJson(
-                userId,
-                initStartTime.toString(),
-                callback = object : RFDGenerator.RFDCallback {
-                    override fun onRfdResult(rfd: ReceivedForce) {
-                        Log.d("MainActivity", "sim rfd : $rfd")
-                        updateRfdRows(rfd)
-                    }
+        applyRunningState(false)
+        updateStatus("Idle. Auth 후 Start 가능")
+    }
 
-                    override fun onRfdError(code: Int, msg: String) {
-                        updateStatus("Simulation RFD error: $msg")
-                    }
+    private fun openFiles() {
+        val intent = Intent(this, PreviewActivity::class.java)
+        selectedSector?.id?.let { intent.putExtra(PreviewActivity.EXTRA_SECTOR_ID, it) }
+        startActivity(intent)
+    }
 
-                    override fun onRfdEmptyMillis(time: Long) = Unit
-                }
-            )
+    private fun applyRunningState(running: Boolean) {
+        isRunning = running
+        btnStart.isEnabled = !running
+        btnStartSimul.isEnabled = !running
+        btnStop.isEnabled = running
+    }
 
-            val selectedUserMode = getSelectedUserMode()
-            uvdGenerator.setUserMode(selectedUserMode)
-            uvdGenerator.generateSimulationUvdFromJson(
-                userId,
-                initStartTime.toString(),
-                callback = object : UVDGenerator.UVDCallback {
-                    override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                        updateUvdLatest(mode, uvd)
-                    }
+    private fun performAuth() {
+        val clientKey = BuildConfig.AUTH_CLIENT_KEY
+        val accessKey = BuildConfig.AUTH_ACCESS_KEY
+        val secretAccessKey = BuildConfig.AUTH_SECRET_ACCESS_KEY
 
-                    override fun onPressureResult(hPa: Float) {
-                        pressure = hPa
-                    }
+        Log.d(AUTH_LOG_TAG, "performAuth() BuildConfig inputs:")
+        Log.d(AUTH_LOG_TAG, "  AUTH_CLIENT_KEY        = ${maskSecret(clientKey)} (len=${clientKey.length})")
+        Log.d(AUTH_LOG_TAG, "  AUTH_ACCESS_KEY        = ${maskSecret(accessKey)} (len=${accessKey.length})")
+        Log.d(AUTH_LOG_TAG, "  AUTH_SECRET_ACCESS_KEY = ${maskSecret(secretAccessKey)} (len=${secretAccessKey.length})")
+        Log.d(AUTH_LOG_TAG, "  USER_BASE_URL          = ${BuildConfig.USER_BASE_URL}")
+        Log.d(AUTH_LOG_TAG, "  REC_BASE_URL           = ${BuildConfig.REC_BASE_URL}")
 
-                    override fun onVelocityResult(kmPh: Float) = Unit
-                    override fun onMagNormSmoothingVarResult(value: Float) = Unit
-                    override fun onUvdPauseMillis(time: Long) = Unit
-                    override fun onUvdError(error: String) = Unit
-                }
-            )
-            updateStatus("Simulation started (${selectedUserMode.name})")
+        if (clientKey.isBlank() || accessKey.isBlank() || secretAccessKey.isBlank()) {
+            Log.w(AUTH_LOG_TAG, "performAuth() aborted: missing local.properties keys")
+            updateStatus("local.properties 에 AUTH_CLIENT_KEY/AUTH_ACCESS_KEY/AUTH_SECRET_ACCESS_KEY 필요")
+            return
         }
 
-        btnStart.setOnClickListener {
-            val saveData = switchSaveData.isChecked
-            val selectedMode = ScanMode.values()[spinnerScanMode.selectedItemPosition]
-            val selectedUserMode = getSelectedUserMode()
-
-            JupiterDataManager.setServiceStartTime(TJLabsUtilFunctions.getCurrentTimeInMilliseconds())
-            JupiterDataManager.addEvent(
-                application,
-                userId,
-                JupiterDataManager.JupiterEventCode.START_SERVICE
-            )
-
-            rfdGenerator.setScanMode(selectedMode)
-            rfdGenerator.generateRfd(
-                -100,
-                -40,
-                getPressure = { pressure },
-                isSaveData = saveData,
-                callback = object : RFDGenerator.RFDCallback {
-                    override fun onRfdResult(rfd: ReceivedForce) {
-                        updateRfdRows(rfd)
-                    }
-
-                    override fun onRfdError(code: Int, msg: String) {
-                        updateStatus("RFD error: $msg")
-                    }
-
-                    override fun onRfdEmptyMillis(time: Long) = Unit
+        updateStatus("Auth 진행 중...")
+        AuthService.signIn(
+            application = application,
+            clientSecret = clientKey,
+            accessKey = accessKey,
+            secretAccessKey = secretAccessKey
+        ) { result ->
+            runOnUiThread {
+                Log.d(AUTH_LOG_TAG, "performAuth() completion: success=${result.success} code=${result.code} tenant='${result.tenantName}' user='${result.tenantUserName}'")
+                if (!result.success) {
+                    isAuthed = false
+                    updateStatus("Auth 실패 code=${result.code}")
+                    return@runOnUiThread
                 }
-            )
-
-            uvdGenerator.setUserMode(selectedUserMode)
-            uvdGenerator.generateUvd(
-                maxPDRStepLength = 0.7f,
-                isSaveData = saveData,
-                callback = object : UVDGenerator.UVDCallback {
-                    override fun onUvdResult(mode: UserMode, uvd: UserVelocity) {
-                        updateUvdLatest(mode, uvd)
-                    }
-
-                    override fun onPressureResult(hPa: Float) {
-                        pressure = hPa
-                    }
-
-                    override fun onVelocityResult(kmPh: Float) {
-                        Log.d("MainActivity", "velocity(kmPh): $kmPh")
-                    }
-
-                    override fun onMagNormSmoothingVarResult(value: Float) = Unit
-                    override fun onUvdPauseMillis(time: Long) = Unit
-
-                    override fun onUvdError(error: String) {
-                        updateStatus("UVD error: $error")
-                    }
-                }
-            )
-            updateStatus("RFD/UVD started (${selectedMode.name}, ${selectedUserMode.name}, save=$saveData)")
-        }
-
-        btnStop.setOnClickListener {
-            rfdGenerator.stopRfdGeneration()
-            uvdGenerator.stopUvdGeneration()
-            JupiterDataManager.addEvent(
-                application,
-                userId,
-                JupiterDataManager.JupiterEventCode.STOP_SERVICE
-            )
-            updateStatus("Stopped")
+                isAuthed = true
+                tenantUserName = result.tenantUserName
+                updateStatus("Auth 성공 tenant=${result.tenantName} user=${result.tenantUserName}")
+                loadSectors()
+            }
         }
     }
 
-    private fun updateStatus(message: String) {
-        runOnUiThread {
-            tvStatus.text = "Status: $message"
+    private fun loadSectors() {
+        Log.d(AUTH_LOG_TAG, "loadSectors() requesting bearer token...")
+        val bearerCallback: (String?) -> Unit = { bearer ->
+            if (bearer.isNullOrBlank()) {
+                Log.w(AUTH_LOG_TAG, "loadSectors() aborted: bearer token is null/blank")
+                runOnUiThread { updateStatus("토큰 없음 - 섹터 조회 실패") }
+            } else {
+                Log.d(AUTH_LOG_TAG, "loadSectors() fetching sectors version=${ApiServices.TENANT_VERSION} from ${BuildConfig.USER_BASE_URL}")
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val response = runCatching {
+                        tenantApi.getMySectors(ApiServices.TENANT_VERSION, bearer)
+                    }.getOrElse {
+                        Log.e(AUTH_LOG_TAG, "loadSectors() exception: ${it.message}", it)
+                        withContext(Dispatchers.Main) { updateStatus("섹터 조회 오류: ${it.message}") }
+                        return@launch
+                    }
+                    Log.d(AUTH_LOG_TAG, "loadSectors() HTTP ${response.code()} successful=${response.isSuccessful}")
+                    if (!response.isSuccessful) {
+                        withContext(Dispatchers.Main) {
+                            updateStatus("섹터 조회 실패 HTTP ${response.code()}")
+                        }
+                        return@launch
+                    }
+                    val options = SectorParser.parse(response.body())
+                    Log.d(AUTH_LOG_TAG, "loadSectors() parsed ${options.size} sector(s): ${options.joinToString { "${it.id}:${it.display}" }}")
+                    withContext(Dispatchers.Main) { applySectors(options) }
+                }
+            }
         }
+        AuthService.bearerToken(bearerCallback)
+    }
+
+    private fun maskSecret(value: String): String {
+        if (value.isEmpty()) return "<empty>"
+        if (value.length <= 8) return "*".repeat(value.length)
+        return value.take(4) + "*".repeat(value.length - 8) + value.takeLast(4)
+    }
+
+    private fun applySectors(options: List<SectorOption>) {
+        sectorOptions = options
+        if (options.isEmpty()) {
+            spinnerSector.adapter = ArrayAdapter(
+                this,
+                android.R.layout.simple_spinner_dropdown_item,
+                listOf("(no sectors)")
+            )
+            selectedSector = null
+            updateStatus("섹터 없음")
+            return
+        }
+        spinnerSector.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            options.map { it.display }
+        )
+        spinnerSector.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedSector = sectorOptions.getOrNull(position)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+        }
+        selectedSector = options.first()
+        updateStatus("섹터 ${options.size}개 로드됨")
+    }
+
+    private fun ensureGenerators() {
+        if (rfdGenerator == null) rfdGenerator = RFDGenerator(application, tenantUserName)
+        if (uvdGenerator == null) uvdGenerator = UVDGenerator(application, tenantUserName)
+    }
+
+    private fun startServices() {
+        if (isRunning) return
+        if (!isAuthed || tenantUserName.isBlank()) {
+            updateStatus("먼저 Auth 를 완료하세요")
+            return
+        }
+        val sector = selectedSector
+        if (sector == null) {
+            updateStatus("섹터를 먼저 선택하세요")
+            return
+        }
+
+        val saveData = switchSaveData.isChecked
+        val selectedMode = ScanMode.values()[spinnerScanMode.selectedItemPosition]
+        val selectedUserMode = getSelectedUserMode()
+
+        serviceStartTime = TJLabsUtilFunctions.getCurrentTimeInMilliseconds().toString()
+        JupiterDataManager.setServiceStartTime(serviceStartTime.toLong())
+        JupiterDataManager.addEvent(
+            application,
+            tenantUserName,
+            JupiterDataManager.JupiterEventCode.START_SERVICE
+        )
+        SessionMetaStore.write(
+            application,
+            SessionMeta(
+                userId = tenantUserName,
+                serviceStartTime = serviceStartTime,
+                sectorId = sector.id,
+                sectorDisplay = sector.display,
+                scanMode = selectedMode.name,
+                userMode = selectedUserMode.name,
+                saveData = saveData,
+                simulated = false
+            )
+        )
+
+        ensureGenerators()
+        val rfd = rfdGenerator!!
+        val uvd = uvdGenerator!!
+
+        rfd.setScanMode(selectedMode)
+        rfd.generateRfd(
+            -100,
+            -40,
+            getPressure = { pressure },
+            isSaveData = saveData,
+            callback = object : RFDGenerator.RFDCallback {
+                override fun onRfdResult(rfd: ReceivedForce) = updateRfdRows(rfd)
+                override fun onRfdError(code: Int, msg: String) = updateStatus("RFD error: $msg")
+                override fun onRfdEmptyMillis(time: Long) = Unit
+            }
+        )
+
+        uvd.setUserMode(selectedUserMode)
+        uvd.generateUvd(
+            maxPDRStepLength = 0.7f,
+            isSaveData = saveData,
+            callback = object : UVDGenerator.UVDCallback {
+                override fun onUvdResult(mode: UserMode, uvd: UserVelocity) = updateUvdLatest(mode, uvd)
+                override fun onPressureResult(hPa: Float) { pressure = hPa }
+                override fun onVelocityResult(kmPh: Float) {
+                    Log.d("MainActivity", "velocity(kmPh): $kmPh")
+                }
+                override fun onMagNormSmoothingVarResult(value: Float) = Unit
+                override fun onUvdPauseMillis(time: Long) = Unit
+                override fun onUvdError(error: String) = updateStatus("UVD error: $error")
+            }
+        )
+        applyRunningState(true)
+        updateStatus(
+            "Start sector=${sector.id} user=$tenantUserName ts=$serviceStartTime " +
+                "scan=${selectedMode.name} mode=${selectedUserMode.name} save=$saveData"
+        )
+    }
+
+    private fun startSimulation() {
+        if (isRunning) return
+        if (tenantUserName.isBlank()) {
+            tenantUserName = "common_${System.currentTimeMillis()}"
+            updateStatus("Auth 없이 시뮬레이션 사용: userId=$tenantUserName")
+        }
+        ensureGenerators()
+        val rfd = rfdGenerator!!
+        val uvd = uvdGenerator!!
+
+        val initStartTime = 1775451068715L
+        serviceStartTime = initStartTime.toString()
+
+        val selectedUserModeForMeta = getSelectedUserMode()
+        SessionMetaStore.write(
+            application,
+            SessionMeta(
+                userId = tenantUserName,
+                serviceStartTime = serviceStartTime,
+                sectorId = selectedSector?.id ?: -1,
+                sectorDisplay = selectedSector?.display ?: "(simulation)",
+                scanMode = "(simulation)",
+                userMode = selectedUserModeForMeta.name,
+                saveData = false,
+                simulated = true
+            )
+        )
+
+        rfd.generateSimulationRfdFromJson(
+            tenantUserName,
+            initStartTime.toString(),
+            callback = object : RFDGenerator.RFDCallback {
+                override fun onRfdResult(rfd: ReceivedForce) = updateRfdRows(rfd)
+                override fun onRfdError(code: Int, msg: String) = updateStatus("Sim RFD error: $msg")
+                override fun onRfdEmptyMillis(time: Long) = Unit
+            }
+        )
+
+        val selectedUserMode = getSelectedUserMode()
+        uvd.setUserMode(selectedUserMode)
+        uvd.generateSimulationUvdFromJson(
+            tenantUserName,
+            initStartTime.toString(),
+            callback = object : UVDGenerator.UVDCallback {
+                override fun onUvdResult(mode: UserMode, uvd: UserVelocity) = updateUvdLatest(mode, uvd)
+                override fun onPressureResult(hPa: Float) { pressure = hPa }
+                override fun onVelocityResult(kmPh: Float) = Unit
+                override fun onMagNormSmoothingVarResult(value: Float) = Unit
+                override fun onUvdPauseMillis(time: Long) = Unit
+                override fun onUvdError(error: String) = Unit
+            }
+        )
+        applyRunningState(true)
+        updateStatus("Simulation started (${selectedUserMode.name})")
+    }
+
+    private fun stopServices() {
+        if (!isRunning) return
+        rfdGenerator?.stopRfdGeneration()
+        uvdGenerator?.stopUvdGeneration()
+        if (tenantUserName.isNotBlank()) {
+            JupiterDataManager.addEvent(
+                application,
+                tenantUserName,
+                JupiterDataManager.JupiterEventCode.STOP_SERVICE
+            )
+        }
+        // Drop SDK instances so the next Start creates fresh generators and UVD/RFD restart from 0.
+        rfdGenerator = null
+        uvdGenerator = null
+        pressure = 0f
+        serviceStartTime = ""
+        runOnUiThread {
+            tvUvdLatest.text = "No UVD data yet"
+            rfdAdapter.submit(emptyList())
+        }
+        applyRunningState(false)
+        updateStatus("Stopped")
+    }
+
+    private fun updateStatus(message: String) {
+        runOnUiThread { tvStatus.text = "Status: $message" }
     }
 
     private fun updateUvdLatest(mode: UserMode, uvd: UserVelocity) {
@@ -219,16 +433,9 @@ class MainActivity : AppCompatActivity() {
         val rows = rfd.rfs.entries
             .sortedByDescending { it.value }
             .map { (name, rssi) ->
-                RfdScanRow(
-                    name = name,
-                    rssi = rssi.toInt(),
-                    scannedAtMillis = rfd.mobile_time
-                )
+                RfdScanRow(name = name, rssi = rssi.toInt(), scannedAtMillis = rfd.mobile_time)
             }
-
-        runOnUiThread {
-            rfdAdapter.submit(rows)
-        }
+        runOnUiThread { rfdAdapter.submit(rows) }
     }
 
     private fun getSelectedUserMode(): UserMode {
@@ -240,20 +447,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions() {
-        val rejectedPermissionList = ArrayList<String>()
+        val rejected = ArrayList<String>()
         for (permission in requiredPermissions) {
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                rejectedPermissionList.add(permission)
+                rejected.add(permission)
             }
         }
-
-        if (rejectedPermissionList.isNotEmpty()) {
-            val array = arrayOfNulls<String>(rejectedPermissionList.size)
-            ActivityCompat.requestPermissions(
-                this,
-                rejectedPermissionList.toArray(array),
-                multiplePermissionsCode
-            )
+        if (rejected.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, rejected.toTypedArray(), multiplePermissionsCode)
         }
     }
 }

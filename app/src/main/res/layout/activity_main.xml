@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/surface_background"
     android:fillViewport="true"
     tools:context=".MainActivity">
 
@@ -11,159 +12,250 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingHorizontal="@dimen/space_l"
+        android:paddingVertical="@dimen/space_l">
 
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TJLabs Common SDK Sample"
+            android:text="TJLabs Common SDK"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+            android:textColor="@color/text_primary"
             android:textStyle="bold" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardUseCompatPadding="true">
+            style="@style/AppCard">
 
-            <TextView
-                android:id="@+id/tvStatus"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="Status: Idle"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Status"
+                    style="@style/SectionTitle" />
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Status: Idle"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/text_primary" />
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Scan Mode"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-            android:textStyle="bold" />
-
-        <Spinner
-            android:id="@+id/spinnerScanMode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="User Mode"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-            android:textStyle="bold" />
-
-        <RadioGroup
-            android:id="@+id/rgUserMode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/rbUserModePdr"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="PDR" />
-
-            <RadioButton
-                android:id="@+id/rbUserModeDr"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="true"
-                android:text="DR" />
-
-            <RadioButton
-                android:id="@+id/rbUserModeAuto"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="AUTO" />
-        </RadioGroup>
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switchSaveData"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:checked="true"
-            android:text="Save data (RFD/UVD JSON)"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnStart"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Start" />
-
-            <Button
-                android:id="@+id/btnStop"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:text="Stop" />
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btnStartSimul"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Start Simulation" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="UVD Latest"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-            android:textStyle="bold" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:cardUseCompatPadding="true">
+            style="@style/AppCard">
 
-            <TextView
-                android:id="@+id/tvUvdLatest"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="No UVD data yet"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Authentication"
+                    style="@style/SectionTitle" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAuth"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/button_height"
+                    style="@style/AppButton.Primary"
+                    android:text="Auth" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:text="Sector"
+                    style="@style/SectionTitle" />
+
+                <Spinner
+                    android:id="@+id/spinnerSector"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:text="Scan Mode"
+                    style="@style/SectionTitle" />
+
+                <Spinner
+                    android:id="@+id/spinnerScanMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:text="User Mode"
+                    style="@style/SectionTitle" />
+
+                <RadioGroup
+                    android:id="@+id/rgUserMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/rbUserModePdr"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="PDR" />
+
+                    <RadioButton
+                        android:id="@+id/rbUserModeDr"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="true"
+                        android:text="DR" />
+
+                    <RadioButton
+                        android:id="@+id/rbUserModeAuto"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="AUTO" />
+                </RadioGroup>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchSaveData"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:checked="true"
+                    android:text="Save data (RFD/UVD JSON)"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/text_primary" />
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="RFD Scan Results"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-            android:textStyle="bold" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvRfdResults"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="360dp"
-            android:layout_marginTop="8dp"
-            android:clipToPadding="false"
-            android:paddingBottom="8dp" />
+            android:layout_height="wrap_content"
+            style="@style/AppCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Actions"
+                    style="@style/SectionTitle" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStart"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        style="@style/AppButton.Primary"
+                        android:text="Start" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStop"
+                        android:layout_width="0dp"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:layout_weight="1"
+                        style="@style/AppButton.Danger"
+                        android:text="Stop" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStartSimul"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        style="@style/AppButton.Outlined"
+                        android:text="Simulate" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFiles"
+                        android:layout_width="0dp"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:layout_weight="1"
+                        style="@style/AppButton.Outlined"
+                        android:text="Files" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AppCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UVD Latest"
+                    style="@style/SectionTitle" />
+
+                <TextView
+                    android:id="@+id/tvUvdLatest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No UVD data yet"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/text_primary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AppCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RFD Scan Results"
+                    style="@style/SectionTitle" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvRfdResults"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/rfd_list_height"
+                    android:clipToPadding="false"
+                    android:paddingBottom="@dimen/space_s" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

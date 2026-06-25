@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/space_l"
+        android:paddingVertical="@dimen/space_l">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AppCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUploadAll"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/button_height"
+                    style="@style/AppButton.Primary"
+                    android:text="모두 업로드 (Upload All)" />
+
+                <ProgressBar
+                    android:id="@+id/pbUploadAll"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:max="100"
+                    android:progress="0"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvPreviewStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="Status: Idle"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/text_primary" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRefresh"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        style="@style/AppButton.Outlined"
+                        android:text="Refresh" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDeleteAll"
+                        android:layout_width="0dp"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:layout_weight="1"
+                        style="@style/AppButton.Outlined"
+                        android:text="Delete All" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/previewCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            style="@style/AppCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Selected Preview"
+                        style="@style/SectionTitle" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnHidePreview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="@dimen/space_s"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        style="@style/AppButton.Outlined"
+                        android:text="Hide" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvPreviewSelected"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="선택된 세트 없음"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="@color/text_secondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:text="UVD Trajectory"
+                    style="@style/SectionTitle" />
+
+                <com.tjlabs.tjlabscommon_sample.preview.UvdTrajectoryView
+                    android:id="@+id/uvdTrajectoryView"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/preview_height"
+                    android:background="@color/surface_preview" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:text="RFD Pattern"
+                    style="@style/SectionTitle" />
+
+                <com.tjlabs.tjlabscommon_sample.preview.RfdPatternView
+                    android:id="@+id/rfdPatternView"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/preview_height"
+                    android:background="@color/surface_preview" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AppCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Test Sets"
+                    style="@style/SectionTitle" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvTestSets"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"
+                    android:paddingBottom="@dimen/space_s"
+                    android:overScrollMode="never" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

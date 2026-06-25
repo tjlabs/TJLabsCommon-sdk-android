@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_s">8dp</dimen>
+    <dimen name="space_m">12dp</dimen>
+    <dimen name="space_l">16dp</dimen>
+    <dimen name="space_xl">20dp</dimen>
+
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_radius">12dp</dimen>
+
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="button_text_min">11sp</dimen>
+    <dimen name="button_text_max">14sp</dimen>
+
+    <dimen name="preview_height">240dp</dimen>
+    <dimen name="rfd_list_height">320dp</dimen>
+</resources>

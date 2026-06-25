@@ -1,41 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    app:cardUseCompatPadding="true">
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/space_xs"
+    android:paddingVertical="@dimen/space_s">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tvBeaconName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Name"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvBeaconName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Name"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
-            android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvBeaconRssi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="RSSI: -80"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+        android:textColor="@color/text_secondary" />
 
-        <TextView
-            android:id="@+id/tvBeaconRssi"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="RSSI: -80"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+    <TextView
+        android:id="@+id/tvBeaconTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Scanned: 2026-04-29 14:00:00.000"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+        android:textColor="@color/text_secondary" />
 
-        <TextView
-            android:id="@+id/tvBeaconTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="Scanned: 2026-04-29 14:00:00.000"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/space_s"
+        android:background="@color/divider" />
 
-    </LinearLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</LinearLayout>
