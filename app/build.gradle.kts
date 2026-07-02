@@ -106,6 +106,7 @@ android {
 dependencies {
     implementation(project(":sdk"))
     implementation("com.github.tjlabs:TJLabsAuth-sdk-android:1.0.26")
+    implementation("com.github.tjlabs:TJLabsResource-sdk-android:1.1.7")
 
     implementation(libs.androidx.core.ktx.v131)
     implementation(libs.androidx.appcompat)

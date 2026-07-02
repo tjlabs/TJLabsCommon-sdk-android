@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/surface_card"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/space_l"
+    android:paddingTop="@dimen/space_l"
+    android:paddingBottom="@dimen/space_s">
+
+    <TextView
+        android:id="@+id/tvDialogSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="0 selected"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+        android:textColor="@color/text_secondary" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_s"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDialogSelectAll"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            style="@style/AppButton.Outlined"
+            android:text="Select all" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDialogClear"
+            android:layout_width="0dp"
+            android:layout_marginStart="@dimen/space_s"
+            android:layout_weight="1"
+            style="@style/AppButton.Outlined"
+            android:text="Clear" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/space_m"
+        android:background="@color/divider" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="@dimen/space_s"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/dialogListContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+</LinearLayout>

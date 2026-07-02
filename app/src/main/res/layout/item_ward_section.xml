@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="@dimen/space_s"
+    android:paddingTop="@dimen/space_m"
+    android:paddingBottom="@dimen/space_xs">
+
+    <View
+        android:id="@+id/vSectionDot"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_marginEnd="@dimen/space_s" />
+
+    <TextView
+        android:id="@+id/tvSectionTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:letterSpacing="0.05"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Overline"
+        android:textColor="@color/text_section"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvSectionCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_s"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+        android:textColor="@color/text_secondary" />
+
+</LinearLayout>
