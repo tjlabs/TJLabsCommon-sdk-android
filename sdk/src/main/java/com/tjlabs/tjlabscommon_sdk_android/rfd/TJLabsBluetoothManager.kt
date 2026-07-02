@@ -55,9 +55,9 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     companion object{
         const val TJLABS_WARD_UUID = "0000feaa-0000-1000-8000-00805f9b34fb"
         const val DEFAULT_SEI_BEACON_NAME_PREFIX = "NI-011-0000"
-        // Pattern matches names like TJ-00CB, TJ-01CB, TJ-99CB (regex; consumers may pass a
-        // literal substring and it will still work because non-special chars match themselves).
-        const val DEFAULT_IBEACON_NAME_KEYWORD = "TJ-\\d{2}CB"
+        // Pattern matches names like TJ-00CB, TJ-0ACB, TJ-FFCB — the two chars between "TJ-"
+        // and "CB" are hex (0-9, A-F, case-insensitive), not decimal digits.
+        const val DEFAULT_IBEACON_NAME_KEYWORD = "TJ-[0-9A-Fa-f]{2}CB"
 
         private fun compileBeaconRegex(pattern: String): Regex =
             runCatching { Regex(pattern) }
