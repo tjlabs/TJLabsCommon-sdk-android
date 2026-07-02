@@ -202,6 +202,14 @@
                         android:layout_weight="1"
                         style="@style/AppButton.Outlined"
                         android:text="Files" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnWards"
+                        android:layout_width="0dp"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:layout_weight="1"
+                        style="@style/AppButton.Outlined"
+                        android:text="Wards" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

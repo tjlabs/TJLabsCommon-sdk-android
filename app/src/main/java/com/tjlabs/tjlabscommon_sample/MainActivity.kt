@@ -31,6 +31,8 @@ import com.tjlabs.tjlabscommon_sample.network.TenantApi
 import com.tjlabs.tjlabscommon_sample.preview.PreviewActivity
 import com.tjlabs.tjlabscommon_sample.preview.SessionMeta
 import com.tjlabs.tjlabscommon_sample.preview.SessionMetaStore
+import com.tjlabs.tjlabscommon_sample.wards.ScannedWardTracker
+import com.tjlabs.tjlabscommon_sample.wards.ScannedWardsActivity
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ScanMode
@@ -58,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnStop: Button
     private lateinit var btnStartSimul: Button
     private lateinit var btnFiles: Button
+    private lateinit var btnWards: Button
     private lateinit var spinnerScanMode: Spinner
     private lateinit var spinnerSector: Spinner
     private lateinit var tvStatus: TextView
@@ -106,6 +109,7 @@ class MainActivity : AppCompatActivity() {
         btnStop = findViewById(R.id.btnStop)
         btnStartSimul = findViewById(R.id.btnStartSimul)
         btnFiles = findViewById(R.id.btnFiles)
+        btnWards = findViewById(R.id.btnWards)
         spinnerScanMode = findViewById(R.id.spinnerScanMode)
         spinnerSector = findViewById(R.id.spinnerSector)
         tvStatus = findViewById(R.id.tvStatus)
@@ -134,6 +138,7 @@ class MainActivity : AppCompatActivity() {
         btnStop.setOnClickListener { stopServices() }
         btnStartSimul.setOnClickListener { startSimulation() }
         btnFiles.setOnClickListener { openFiles() }
+        btnWards.setOnClickListener { openWards() }
 
         applyRunningState(false)
         updateStatus("Idle. Auth 후 Start 가능")
@@ -143,6 +148,10 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, PreviewActivity::class.java)
         selectedSector?.id?.let { intent.putExtra(PreviewActivity.EXTRA_SECTOR_ID, it) }
         startActivity(intent)
+    }
+
+    private fun openWards() {
+        startActivity(Intent(this, ScannedWardsActivity::class.java))
     }
 
     private fun applyRunningState(running: Boolean) {
@@ -430,6 +439,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateRfdRows(rfd: ReceivedForce) {
+        ScannedWardTracker.record(rfd)
         val rows = rfd.rfs.entries
             .sortedByDescending { it.value }
             .map { (name, rssi) ->
