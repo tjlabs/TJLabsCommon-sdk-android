@@ -121,7 +121,7 @@ class MainActivity : AppCompatActivity() {
         val modeNames = ScanMode.values().map { it.name }
         spinnerScanMode.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modeNames)
-        spinnerScanMode.setSelection(modeNames.indexOf(ScanMode.ONLY_IBEACON_SCAN.name))
+        spinnerScanMode.setSelection(modeNames.indexOf(ScanMode.WARD_ALL_SCAN.name))
 
         spinnerSector.adapter = ArrayAdapter(
             this,
