@@ -43,7 +43,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
 
     init {
         setSeiScanSpec()
-        setScanMode(ScanMode.ONLY_WARD_SCAN)
+        setScanMode(ScanMode.WARD_ALL_SCAN)
     }
 
     fun setSeiScanSpec(
@@ -95,6 +95,18 @@ class RFDGenerator(private val application: Application, val userId : String = "
             ScanMode.ONLY_SEI_SCAN -> listOf()
             ScanMode.WARD_SEI_SCAN -> listOf()
             ScanMode.ONLY_IBEACON_SCAN -> listOf()
+            ScanMode.WARD_ALL_SCAN -> listOf(
+                ScanFilter.Builder()
+                    .setServiceUuid(ParcelUuid.fromString(TJLabsBluetoothManager.TJLABS_WARD_UUID))
+                    .build(),
+                ScanFilter.Builder()
+                    .setManufacturerData(
+                        0x004C,
+                        byteArrayOf(0x02, 0x15),
+                        byteArrayOf(0xFF.toByte(), 0xFF.toByte())
+                    )
+                    .build()
+            )
         }
         tjLabsBluetoothManager.setScanFilters(scanFilters)
     }

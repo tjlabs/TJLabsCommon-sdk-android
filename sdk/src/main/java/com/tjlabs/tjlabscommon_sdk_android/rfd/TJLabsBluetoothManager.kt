@@ -63,7 +63,7 @@ internal class TJLabsBluetoothManager(private val context: Context) {
             runCatching { Regex(pattern) }
                 .getOrElse { Regex(Regex.escape(pattern)) }
     }
-    private var scanMode: ScanMode = ScanMode.ONLY_WARD_SCAN
+    private var scanMode: ScanMode = ScanMode.WARD_ALL_SCAN
     private var wardServiceParcelUuid: ParcelUuid? = parseParcelUuidOrNull(TJLABS_WARD_UUID)
     private var seiBeaconNamePrefix: String = DEFAULT_SEI_BEACON_NAME_PREFIX
     private var iBeaconNameKeyword: String = DEFAULT_IBEACON_NAME_KEYWORD
@@ -259,6 +259,9 @@ internal class TJLabsBluetoothManager(private val context: Context) {
                 hasServiceUuid(scanRecord, wardServiceParcelUuid) || isSeiMatched(scanRecord)
             }
             ScanMode.ONLY_IBEACON_SCAN -> isIBeaconMatched(scanRecord)
+            ScanMode.WARD_ALL_SCAN -> {
+                hasServiceUuid(scanRecord, wardServiceParcelUuid) || isIBeaconMatched(scanRecord)
+            }
         }
     }
 
