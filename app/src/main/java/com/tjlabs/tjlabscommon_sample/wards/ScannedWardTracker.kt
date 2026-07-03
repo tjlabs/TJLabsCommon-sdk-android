@@ -6,32 +6,40 @@ import kotlinx.coroutines.flow.StateFlow
 
 object ScannedWardTracker {
 
-    data class WardEntry(val name: String, val maxRssi: Int)
+    enum class Source { SCAN, BUNDLE_ONLY }
+
+    data class WardEntry(
+        val name: String,
+        val maxRssi: Int?,
+        val source: Source,
+        val matchedLevel: String?,
+    ) {
+        val isScanned: Boolean get() = source == Source.SCAN
+        val isMatched: Boolean get() = matchedLevel != null
+    }
 
     private val maxRssiByName = linkedMapOf<String, Int>()
+    private var bundleWards: BundleWardMap? = null
 
     private val _entries = MutableStateFlow<List<WardEntry>>(emptyList())
     val entries: StateFlow<List<WardEntry>> = _entries
 
-    private val _checkedNames = MutableStateFlow<Set<String>>(emptySet())
-    val checkedNames: StateFlow<Set<String>> = _checkedNames
+    private val _bundleSectorId = MutableStateFlow<Int?>(null)
+    val bundleSectorId: StateFlow<Int?> = _bundleSectorId
 
     @Synchronized
     fun reset() {
         maxRssiByName.clear()
+        bundleWards = null
+        _bundleSectorId.value = null
         _entries.value = emptyList()
-        _checkedNames.value = emptySet()
     }
 
     @Synchronized
-    fun toggleChecked(name: String) {
-        val current = _checkedNames.value
-        _checkedNames.value = if (name in current) current - name else current + name
-    }
-
-    @Synchronized
-    fun resetChecks() {
-        _checkedNames.value = emptySet()
+    fun clearBundle() {
+        bundleWards = null
+        _bundleSectorId.value = null
+        publish()
     }
 
     @Synchronized
@@ -48,23 +56,58 @@ object ScannedWardTracker {
         if (changed) publish()
     }
 
-    private fun publish() {
-        _entries.value = maxRssiByName.entries
-            .map { WardEntry(it.key, it.value) }
-            .sortedWith(compareBy(wardNameComparator) { it.name })
+    @Synchronized
+    fun applyBundle(bundle: BundleWardMap) {
+        bundleWards = bundle
+        _bundleSectorId.value = bundle.sectorId
+        publish()
     }
 
-    // Ward name format: TJ-00CB-0001012C-0000 → sort by the 3rd segment (index 2) as hex.
-    // Names that don't match fall back to whole-string compare and sink to the end.
-    private val wardNameComparator = Comparator<String> { a, b ->
-        val ka = hexKeyOf(a)
-        val kb = hexKeyOf(b)
+    private fun publish() {
+        val bundle = bundleWards
+        val scanEntries = maxRssiByName.map { (name, rssi) ->
+            WardEntry(
+                name = name,
+                maxRssi = rssi,
+                source = Source.SCAN,
+                matchedLevel = bundle?.nameToLevelLabel?.get(name),
+            )
+        }
+        val bundleOnlyEntries = bundle?.let { b ->
+            b.nameToLevelLabel.entries
+                .filter { it.key !in maxRssiByName }
+                .map { (name, level) ->
+                    WardEntry(
+                        name = name,
+                        maxRssi = null,
+                        source = Source.BUNDLE_ONLY,
+                        matchedLevel = level,
+                    )
+                }
+        }.orEmpty()
+
+        _entries.value = (scanEntries + bundleOnlyEntries)
+            .sortedWith(entryOrder)
+    }
+
+    private val entryOrder = Comparator<WardEntry> { a, b ->
+        val groupA = groupRank(a)
+        val groupB = groupRank(b)
+        if (groupA != groupB) return@Comparator groupA - groupB
+        val ka = hexKeyOf(a.name)
+        val kb = hexKeyOf(b.name)
         when {
             ka != null && kb != null -> ka.compareTo(kb)
             ka != null -> -1
             kb != null -> 1
-            else -> a.compareTo(b, ignoreCase = true)
+            else -> a.name.compareTo(b.name, ignoreCase = true)
         }
+    }
+
+    private fun groupRank(e: WardEntry): Int = when {
+        e.source == Source.SCAN && e.isMatched -> 0
+        e.source == Source.SCAN -> 1
+        else -> 2
     }
 
     private fun hexKeyOf(name: String): Long? {

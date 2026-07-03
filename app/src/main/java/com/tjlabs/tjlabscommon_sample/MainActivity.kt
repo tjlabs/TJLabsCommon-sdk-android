@@ -151,7 +151,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openWards() {
-        startActivity(Intent(this, ScannedWardsActivity::class.java))
+        val intent = Intent(this, ScannedWardsActivity::class.java)
+        selectedSector?.let {
+            intent.putExtra(ScannedWardsActivity.EXTRA_SECTOR_ID, it.id)
+            intent.putExtra(ScannedWardsActivity.EXTRA_SECTOR_DISPLAY, it.display)
+        }
+        startActivity(intent)
     }
 
     private fun applyRunningState(running: Boolean) {

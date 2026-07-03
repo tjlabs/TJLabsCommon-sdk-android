@@ -29,50 +29,78 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:baselineAligned="false">
 
                 <TextView
-                    android:id="@+id/tvWardsCount"
+                    android:id="@+id/chipMatched"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Total: 0 (showing 0)"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-                    android:textColor="@color/text_primary"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnWardsReset"
-                    android:layout_width="wrap_content"
-                    android:layout_marginStart="@dimen/space_s"
-                    style="@style/AppButton.Danger"
-                    android:text="Reset" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_xs"
-                android:gravity="top"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tvWardsChecked"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Checked: 0"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:background="@drawable/legend_chip_bg"
+                    android:clickable="true"
+                    android:drawableStart="@drawable/legend_dot_matched"
+                    android:drawablePadding="@dimen/space_xs"
+                    android:ellipsize="none"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:paddingHorizontal="@dimen/space_s"
+                    android:paddingVertical="@dimen/space_s"
+                    android:text="Match 0"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                     android:textColor="@color/text_primary" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnWardsUncheck"
-                    android:layout_width="wrap_content"
-                    android:layout_marginStart="@dimen/space_s"
-                    style="@style/AppButton.Outlined"
-                    android:text="Uncheck" />
+                <TextView
+                    android:id="@+id/chipScanOnly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_xs"
+                    android:layout_weight="1"
+                    android:background="@drawable/legend_chip_bg"
+                    android:clickable="true"
+                    android:drawableStart="@drawable/legend_dot_scan_only"
+                    android:drawablePadding="@dimen/space_xs"
+                    android:ellipsize="none"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:paddingHorizontal="@dimen/space_s"
+                    android:paddingVertical="@dimen/space_s"
+                    android:text="Scan 0"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/chipBundleOnly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_xs"
+                    android:layout_weight="1"
+                    android:background="@drawable/legend_chip_bg"
+                    android:clickable="true"
+                    android:drawableStart="@drawable/legend_dot_bundle_only"
+                    android:drawablePadding="@dimen/space_xs"
+                    android:ellipsize="none"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:paddingHorizontal="@dimen/space_s"
+                    android:paddingVertical="@dimen/space_s"
+                    android:text="Bundle 0"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="@color/text_primary" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvWardsStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text=""
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                android:textColor="@color/text_secondary"
+                android:visibility="gone" />
 
             <EditText
                 android:id="@+id/etWardSearch"
@@ -85,7 +113,55 @@
                 android:maxLines="1"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:orientation="horizontal"
+                android:baselineAligned="false">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWardsCompare"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/AppButton.Primary"
+                    android:text="Compare" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWardsLoadFile"
+                    android:layout_width="0dp"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_weight="1"
+                    style="@style/AppButton.Outlined"
+                    android:text="Load" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWardsReset"
+                    android:layout_width="0dp"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_weight="1"
+                    style="@style/AppButton.Danger"
+                    android:text="Reset" />
+            </LinearLayout>
         </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardLevelSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        style="@style/AppCard">
+
+        <TextView
+            android:id="@+id/tvLevelSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="2dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp" />
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.card.MaterialCardView

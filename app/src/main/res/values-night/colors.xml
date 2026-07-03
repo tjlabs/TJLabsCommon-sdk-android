@@ -16,6 +16,13 @@
 
     <color name="divider">#334155</color>
 
+    <color name="ward_matched_bg">#14532D</color>
+    <color name="ward_matched_text">#BBF7D0</color>
+    <color name="ward_scan_only_bg">#78350F</color>
+    <color name="ward_scan_only_text">#FDE68A</color>
+    <color name="ward_bundle_only_bg">#1F2937</color>
+    <color name="ward_bundle_only_text">#9CA3AF</color>
+
     <!-- Disabled button states need darker bg/stroke and dimmer text on dark surfaces -->
     <color name="button_disabled_bg">#334155</color>
     <color name="button_disabled_stroke">#334155</color>

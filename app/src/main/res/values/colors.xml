@@ -20,6 +20,13 @@
 
     <color name="divider">#E5E7EB</color>
 
+    <color name="ward_matched_bg">#DCFCE7</color>
+    <color name="ward_matched_text">#166534</color>
+    <color name="ward_scan_only_bg">#FEF3C7</color>
+    <color name="ward_scan_only_text">#92400E</color>
+    <color name="ward_bundle_only_bg">#F3F4F6</color>
+    <color name="ward_bundle_only_text">#6B7280</color>
+
     <color name="button_disabled_bg">#D1D5DB</color>
     <color name="button_disabled_stroke">#D1D5DB</color>
     <color name="button_disabled_text">#9CA3AF</color>
