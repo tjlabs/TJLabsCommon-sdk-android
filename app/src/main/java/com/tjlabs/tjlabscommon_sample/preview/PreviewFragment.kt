@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -128,21 +129,34 @@ class PreviewFragment : Fragment() {
             return
         }
         val label = "${set.userId}_${set.serviceStartTime}"
-        adapter.setUploadProgress(set, UploadProgress(UploadStage.UPLOADING, 0, 3, "starting"))
-        updateStatus("Upload 시작: $label")
-        uploadSet(set) { uploaded, failed ->
-            val stage = if (failed == 0 && uploaded > 0) UploadStage.DONE else UploadStage.FAILED
-            adapter.setUploadProgress(set, UploadProgress(stage, uploaded, 3, "success=$uploaded fail=$failed"))
-            updateStatus("Upload 완료 ($label): 성공=$uploaded 실패=$failed")
-            // Let the user see the ✓ for a moment before the row disappears on refresh.
-            view?.postDelayed({ refresh() }, DONE_DISPLAY_MILLIS)
+        confirm(
+            title = "업로드 확인",
+            message = "$label\n\n이 세트를 업로드할까요?",
+            positive = "업로드"
+        ) {
+            adapter.setUploadProgress(set, UploadProgress(UploadStage.UPLOADING, 0, 3, "starting"))
+            updateStatus("Upload 시작: $label")
+            uploadSet(set) { uploaded, failed ->
+                val stage = if (failed == 0 && uploaded > 0) UploadStage.DONE else UploadStage.FAILED
+                adapter.setUploadProgress(set, UploadProgress(stage, uploaded, 3, "success=$uploaded fail=$failed"))
+                updateStatus("Upload 완료 ($label): 성공=$uploaded 실패=$failed")
+                // Let the user see the ✓ for a moment before the row disappears on refresh.
+                view?.postDelayed({ refresh() }, DONE_DISPLAY_MILLIS)
+            }
         }
     }
 
     private fun onDelete(set: TestSet) {
-        val deleted = TestSetRepository.delete(requireActivity().application, set)
-        updateStatus("삭제: ${set.userId}_${set.serviceStartTime} ($deleted files)")
-        refresh()
+        val label = "${set.userId}_${set.serviceStartTime}"
+        confirm(
+            title = "삭제 확인",
+            message = "$label\n\n이 세트를 삭제할까요? 되돌릴 수 없습니다.",
+            positive = "삭제"
+        ) {
+            val deleted = TestSetRepository.delete(requireActivity().application, set)
+            updateStatus("삭제: $label ($deleted files)")
+            refresh()
+        }
     }
 
     private fun onUploadAll() {
@@ -155,33 +169,39 @@ class PreviewFragment : Fragment() {
             updateStatus("업로드할 세트가 없습니다")
             return
         }
-        btnUploadAll.isEnabled = false
-        pbUploadAll.visibility = View.VISIBLE
-        pbUploadAll.max = sets.size
-        pbUploadAll.progress = 0
-        updateStatus("전체 업로드 시작: ${sets.size}개 세트")
-        sets.forEach { set ->
-            adapter.setUploadProgress(set, UploadProgress(UploadStage.UPLOADING, 0, 3, "queued"))
-        }
-        var completedSets = 0
-        var totalUploaded = 0
-        var totalFailed = 0
-        sets.forEach { set ->
-            uploadSet(set) { uploaded, failed ->
-                val stage = if (failed == 0 && uploaded > 0) UploadStage.DONE else UploadStage.FAILED
-                adapter.setUploadProgress(set, UploadProgress(stage, uploaded, 3, "success=$uploaded fail=$failed"))
-                completedSets += 1
-                totalUploaded += uploaded
-                totalFailed += failed
-                pbUploadAll.progress = completedSets
-                updateStatus("전체 업로드 $completedSets/${sets.size} · 파일 성공=$totalUploaded 실패=$totalFailed")
-                if (completedSets == sets.size) {
-                    updateStatus("전체 업로드 완료: 파일 성공=$totalUploaded 실패=$totalFailed")
-                    view?.postDelayed({
-                        pbUploadAll.visibility = View.GONE
-                        btnUploadAll.isEnabled = true
-                        refresh()
-                    }, DONE_DISPLAY_MILLIS)
+        confirm(
+            title = "전체 업로드 확인",
+            message = "${sets.size}개 세트를 모두 업로드할까요?",
+            positive = "업로드"
+        ) {
+            btnUploadAll.isEnabled = false
+            pbUploadAll.visibility = View.VISIBLE
+            pbUploadAll.max = sets.size
+            pbUploadAll.progress = 0
+            updateStatus("전체 업로드 시작: ${sets.size}개 세트")
+            sets.forEach { set ->
+                adapter.setUploadProgress(set, UploadProgress(UploadStage.UPLOADING, 0, 3, "queued"))
+            }
+            var completedSets = 0
+            var totalUploaded = 0
+            var totalFailed = 0
+            sets.forEach { set ->
+                uploadSet(set) { uploaded, failed ->
+                    val stage = if (failed == 0 && uploaded > 0) UploadStage.DONE else UploadStage.FAILED
+                    adapter.setUploadProgress(set, UploadProgress(stage, uploaded, 3, "success=$uploaded fail=$failed"))
+                    completedSets += 1
+                    totalUploaded += uploaded
+                    totalFailed += failed
+                    pbUploadAll.progress = completedSets
+                    updateStatus("전체 업로드 $completedSets/${sets.size} · 파일 성공=$totalUploaded 실패=$totalFailed")
+                    if (completedSets == sets.size) {
+                        updateStatus("전체 업로드 완료: 파일 성공=$totalUploaded 실패=$totalFailed")
+                        view?.postDelayed({
+                            pbUploadAll.visibility = View.GONE
+                            btnUploadAll.isEnabled = true
+                            refresh()
+                        }, DONE_DISPLAY_MILLIS)
+                    }
                 }
             }
         }
@@ -225,9 +245,30 @@ class PreviewFragment : Fragment() {
             updateStatus("삭제할 세트가 없습니다")
             return
         }
-        val totalDeleted = sets.sumOf { TestSetRepository.delete(requireActivity().application, it) }
-        updateStatus("전체 삭제: ${sets.size}개 세트 · $totalDeleted files")
-        refresh()
+        confirm(
+            title = "전체 삭제 확인",
+            message = "${sets.size}개 세트를 모두 삭제할까요? 되돌릴 수 없습니다.",
+            positive = "삭제"
+        ) {
+            val totalDeleted = sets.sumOf { TestSetRepository.delete(requireActivity().application, it) }
+            updateStatus("전체 삭제: ${sets.size}개 세트 · $totalDeleted files")
+            refresh()
+        }
+    }
+
+    private fun confirm(
+        title: String,
+        message: String,
+        positive: String,
+        onConfirm: () -> Unit
+    ) {
+        if (!isAdded) return
+        AlertDialog.Builder(requireContext())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positive) { _, _ -> onConfirm() }
+            .setNegativeButton("취소", null)
+            .show()
     }
 
     private fun updateStatus(message: String) {
