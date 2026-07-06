@@ -9,7 +9,17 @@ import android.hardware.SensorManager
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsUtilFunctions
 import java.util.Timer
 import java.util.TimerTask
+import java.util.concurrent.atomic.AtomicInteger
 
+
+internal data class SensorEventCounts(
+    val acc: Int,
+    val gyro: Int,
+    val gameVector: Int,
+    val rotVector: Int,
+    val mag: Int,
+    val pressure: Int
+)
 
 internal class TJLabsSensorManager(private val context : Context, private val frequency : Int): SensorEventListener {
     interface SensorResultListener {
@@ -23,6 +33,22 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
     private var sensorData = SensorData()
     private var sensorTimer: Timer? = null
     private var isRunning = false
+
+    private val accEventCount = AtomicInteger(0)
+    private val gyroEventCount = AtomicInteger(0)
+    private val gameVectorEventCount = AtomicInteger(0)
+    private val rotVectorEventCount = AtomicInteger(0)
+    private val magEventCount = AtomicInteger(0)
+    private val pressureEventCount = AtomicInteger(0)
+
+    fun snapshotAndResetEventCounts(): SensorEventCounts = SensorEventCounts(
+        acc = accEventCount.getAndSet(0),
+        gyro = gyroEventCount.getAndSet(0),
+        gameVector = gameVectorEventCount.getAndSet(0),
+        rotVector = rotVectorEventCount.getAndSet(0),
+        mag = magEventCount.getAndSet(0),
+        pressure = pressureEventCount.getAndSet(0)
+    )
 
     init {
         initSensorManager()
@@ -81,26 +107,32 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
             when (event.sensor.type) {
                 Sensor.TYPE_ACCELEROMETER -> {
                     System.arraycopy(event.values, 0, sensorData.acc, 0, sensorData.acc.size)
+                    accEventCount.incrementAndGet()
                 }
 
                 Sensor.TYPE_GYROSCOPE -> {
                     System.arraycopy(event.values, 0, sensorData.gyro, 0, sensorData.gyro.size)
+                    gyroEventCount.incrementAndGet()
                 }
 
                 Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED -> {
                     System.arraycopy(event.values, 0, sensorData.magRaw, 0, sensorData.magRaw.size)
+                    magEventCount.incrementAndGet()
                 }
 
                 Sensor.TYPE_GAME_ROTATION_VECTOR -> {
                     System.arraycopy(event.values, 0, sensorData.gameVector, 0, sensorData.gameVector.size)
+                    gameVectorEventCount.incrementAndGet()
                 }
 
                 Sensor.TYPE_ROTATION_VECTOR -> {
                     System.arraycopy(event.values, 0, sensorData.rotVector, 0, sensorData.rotVector.size)
+                    rotVectorEventCount.incrementAndGet()
                 }
 
                 Sensor.TYPE_PRESSURE -> {
                     System.arraycopy(event.values, 0, sensorData.pressure, 0, sensorData.pressure.size)
+                    pressureEventCount.incrementAndGet()
                 }
             }
         }

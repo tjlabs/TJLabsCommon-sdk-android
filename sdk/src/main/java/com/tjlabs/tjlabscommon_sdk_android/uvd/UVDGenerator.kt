@@ -10,6 +10,7 @@ import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.loadU
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.saveUvdResultAsJson
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.sensorMutableList
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.sensorSimulationIndex
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import com.tjlabs.tjlabscommon_sdk_android.uvd.dr.TJLabsDRDistanceEstimator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
 
@@ -71,6 +72,46 @@ class UVDGenerator(private val application: Application, private val userId : St
     private var isSaveUvdData = false
     private val simulationHandler = Handler(Looper.getMainLooper())
     private var simulationRunnable: Runnable? = null
+
+    private var preHeadingForDiag: Float = Float.NaN
+
+    private fun logUvdDiag(
+        time: Long,
+        dtime: Long?,
+        counts: SensorEventCounts,
+        sensorData: SensorData,
+        curHeadingDeg: Float,
+        velocity: Float,
+        modeTag: String,
+        isIndexChanged: Boolean,
+        index: Int,
+        length: Float
+    ) {
+        val prev = preHeadingForDiag
+        val dHeading = if (prev.isNaN()) 0f else {
+            val raw = curHeadingDeg - prev
+            when {
+                raw > 180f -> raw - 360f
+                raw < -180f -> raw + 360f
+                else -> raw
+            }
+        }
+        preHeadingForDiag = curHeadingDeg
+
+        val gyroZ = sensorData.gyro[2]
+        val gyroX = sensorData.gyro[0]
+        val gyroY = sensorData.gyro[1]
+
+        TJLabsCommonLog.d(
+            "UVD_DIAG",
+            "t=$time | dt=${dtime ?: -1}ms | ev(a/g/gv/rv/m/p)=" +
+                "${counts.acc}/${counts.gyro}/${counts.gameVector}/${counts.rotVector}/${counts.mag}/${counts.pressure}" +
+                " | gyro=[${"%.3f".format(gyroX)},${"%.3f".format(gyroY)},${"%.3f".format(gyroZ)}]rad/s" +
+                " | dH=${"%+.2f".format(dHeading)}° H=${"%.2f".format(curHeadingDeg)}°" +
+                " | vel=${"%.3f".format(velocity)} len=${"%.3f".format(length)}" +
+                " | mode=$modeTag idxCh=$isIndexChanged idx=$index"
+        )
+    }
 
     fun setRFlow(rflow: Float, rflowForVelocity: Float, rflowForAutoMode: Float, isSufficient: Boolean, isSufficientForVelocity: Boolean, isSufficientForAutoMode: Boolean) {
         this.rflow = rflow
@@ -290,6 +331,7 @@ class UVDGenerator(private val application: Application, private val userId : St
     }
 
     private fun generatePedestrianUvd(time : Long, dtime : Long?, sensorData: SensorData, callback: UVDCallback) {
+        val counts = tjLabsSensorManager.snapshotAndResetEventCounts()
         val pdrUnit = tjLabsPdrDistanceEstimator.estimateDistanceInfo(time, sensorData)
         val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(dtime, sensorData).toDegree()
         val isLookingStatus = tjLabsUnitStatusEstimator.estimateStatus(attDegree, pdrUnit.isIndexChanged)
@@ -308,9 +350,17 @@ class UVDGenerator(private val application: Application, private val userId : St
         }
         callback.onPressureResult(sensorData.pressure[0])
         callback.onVelocityResult(resetVelocityAfterSeconds(pdrUnit.velocity))
+
+        logUvdDiag(
+            time = time, dtime = dtime, counts = counts, sensorData = sensorData,
+            curHeadingDeg = attDegree.yaw, velocity = pdrUnit.velocity,
+            modeTag = "PDR", isIndexChanged = pdrUnit.isIndexChanged,
+            index = pdrUnit.index, length = pdrUnit.length
+        )
     }
 
     private fun generateVehicleUvd(time : Long, dtime : Long?, sensorData: SensorData, callback: UVDCallback) {
+        val counts = tjLabsSensorManager.snapshotAndResetEventCounts()
         val (drUnit, magNormSmoothingVariance) = tjLabsDrDistanceEstimator.estimateDistanceInfo(dtime, sensorData)
         val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(dtime, sensorData).toDegree()
 
@@ -331,9 +381,17 @@ class UVDGenerator(private val application: Application, private val userId : St
         callback.onPressureResult(sensorData.pressure[0])
         callback.onVelocityResult(resetVelocityAfterSeconds(drUnit.velocity))
         callback.onMagNormSmoothingVarResult(magNormSmoothingVariance)
+
+        logUvdDiag(
+            time = time, dtime = dtime, counts = counts, sensorData = sensorData,
+            curHeadingDeg = attDegree.yaw, velocity = drUnit.velocity,
+            modeTag = "DR", isIndexChanged = drUnit.isIndexChanged,
+            index = drUnit.index, length = drUnit.length
+        )
     }
 
     private fun generateAutoUvd(time : Long, dtime : Long?, sensorData: SensorData, callback: UVDCallback) {
+        val counts = tjLabsSensorManager.snapshotAndResetEventCounts()
         val pdrUnit = tjLabsPdrDistanceEstimator.estimateDistanceInfo(time, sensorData)
         val attDegree = tjLabsAttitudeEstimator.estimateAttitudeRadian(dtime, sensorData).toDegree()
         val (drUnit, magNormSmoothingVariance) = tjLabsDrDistanceEstimator.estimateDistanceInfo(dtime, sensorData)
@@ -402,7 +460,7 @@ class UVDGenerator(private val application: Application, private val userId : St
 
                 uvdGenerationTimeMillis = time
                 val uvdResult = UserVelocity(userId, time, autoUnitIndexCount, length, heading, true)
-                callback.onUvdResult(UserMode.MODE_VEHICLE, uvdResult)
+            callback.onUvdResult(UserMode.MODE_VEHICLE, uvdResult)
                 saveUvd(UserMode.MODE_VEHICLE, uvdResult)
             } else{
                 callback.onUvdPauseMillis(time - uvdGenerationTimeMillis)
@@ -426,6 +484,17 @@ class UVDGenerator(private val application: Application, private val userId : St
             callback.onVelocityResult(resetVelocityAfterSeconds(drUnit.velocity))
         }
         callback.onMagNormSmoothingVarResult(magNormSmoothingVariance)
+
+        val isPed = currentUserMode == UserMode.MODE_PEDESTRIAN
+        val activeUnit = if (isPed) pdrUnit else drUnit
+        logUvdDiag(
+            time = time, dtime = dtime, counts = counts, sensorData = sensorData,
+            curHeadingDeg = attDegree.yaw,
+            velocity = if (isPed) pdrUnit.velocity else drUnit.velocity,
+            modeTag = if (isPed) "AUTO-PDR" else "AUTO-DR",
+            isIndexChanged = activeUnit.isIndexChanged,
+            index = autoUnitIndexCount, length = activeUnit.length
+        )
     }
 
     fun stopUvdGeneration() {
