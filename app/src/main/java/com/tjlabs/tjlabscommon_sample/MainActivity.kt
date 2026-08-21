@@ -33,6 +33,7 @@ import com.tjlabs.tjlabscommon_sample.preview.SessionMeta
 import com.tjlabs.tjlabscommon_sample.preview.SessionMetaStore
 import com.tjlabs.tjlabscommon_sample.wards.ScannedWardTracker
 import com.tjlabs.tjlabscommon_sample.wards.ScannedWardsActivity
+import com.tjlabs.tjlabscommon_sdk_android.rfd.PermissionDiagnostic
 import com.tjlabs.tjlabscommon_sdk_android.rfd.RFDGenerator
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ReceivedForce
 import com.tjlabs.tjlabscommon_sdk_android.rfd.ScanMode
@@ -61,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnStartSimul: Button
     private lateinit var btnFiles: Button
     private lateinit var btnWards: Button
+    private lateinit var btnDiagnose: Button
     private lateinit var spinnerScanMode: Spinner
     private lateinit var spinnerSector: Spinner
     private lateinit var tvStatus: TextView
@@ -110,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         btnStartSimul = findViewById(R.id.btnStartSimul)
         btnFiles = findViewById(R.id.btnFiles)
         btnWards = findViewById(R.id.btnWards)
+        btnDiagnose = findViewById(R.id.btnDiagnose)
         spinnerScanMode = findViewById(R.id.spinnerScanMode)
         spinnerSector = findViewById(R.id.spinnerSector)
         tvStatus = findViewById(R.id.tvStatus)
@@ -139,6 +142,7 @@ class MainActivity : AppCompatActivity() {
         btnStartSimul.setOnClickListener { startSimulation() }
         btnFiles.setOnClickListener { openFiles() }
         btnWards.setOnClickListener { openWards() }
+        btnDiagnose.setOnClickListener { showBleScanDiagnose() }
 
         applyRunningState(false)
         updateStatus("Idle. Auth 후 Start 가능")
@@ -157,6 +161,34 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra(ScannedWardsActivity.EXTRA_SECTOR_DISPLAY, it.display)
         }
         startActivity(intent)
+    }
+
+    private fun showBleScanDiagnose() {
+        val report = PermissionDiagnostic.diagnoseBleScanReadiness(this)
+        val statusIcon = if (report.isReady) "✅ READY" else "❌ NOT READY"
+        val details = buildString {
+            appendLine("Status: $statusIcon")
+            appendLine()
+            appendLine("BLUETOOTH_SCAN granted: ${report.hasBluetoothScanPermission}")
+            appendLine("Location granted (FINE or COARSE): ${report.hasLocationPermission}")
+            appendLine("Manifest 'neverForLocation' flag: ${report.manifestHasNeverForLocationFlag}")
+            if (report.problems.isNotEmpty()) {
+                appendLine()
+                appendLine("── Problems ──")
+                report.problems.forEachIndexed { idx, p -> appendLine("${idx + 1}. $p") }
+            }
+            report.remediation?.let {
+                appendLine()
+                appendLine("── Remediation ──")
+                appendLine(it)
+            }
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("BLE Scan Readiness")
+            .setMessage(details)
+            .setPositiveButton("OK", null)
+            .show()
+        updateStatus("Diagnose: $statusIcon")
     }
 
     private fun applyRunningState(running: Boolean) {

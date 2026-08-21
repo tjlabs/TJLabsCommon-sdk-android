@@ -211,6 +211,14 @@
                         style="@style/AppButton.Outlined"
                         android:text="Wards" />
                 </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDiagnose"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/button_height"
+                    android:layout_marginTop="@dimen/space_s"
+                    style="@style/AppButton.Outlined"
+                    android:text="BLE Scan Readiness Diagnose" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
