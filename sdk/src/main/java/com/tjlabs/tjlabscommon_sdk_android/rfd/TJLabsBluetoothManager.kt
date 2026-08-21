@@ -17,6 +17,7 @@ import android.os.Looper
 import android.os.ParcelUuid
 import android.os.SystemClock
 import androidx.core.app.ActivityCompat
+import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import java.util.Collections
 import java.util.HashSet
 
@@ -82,8 +83,20 @@ internal class TJLabsBluetoothManager(private val context: Context) {
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
             val hasLocationPermission = hasFineLocation || hasCoarseLocation
 
+            // neverForLocation flag 가 있으면 OS 는 스캔을 허용하지만 iBeacon/Eddystone 광고를 필터링해
+            // scan 결과가 조용히 0 건이 될 수 있다. Silent 실패는 필드 진단이 매우 어려우므로 정상 상태가
+            // 아닌 이 케이스는 아예 시작 전에 fail 로 차단해 개발자가 원인을 즉시 인지하도록 한다.
+            val hasNeverForLocationFlag = PermissionDiagnostic.hasBluetoothScanNeverForLocation(context)
+
             if (!hasBlePermissions) {
                 Pair(false, "Required BLE permission(BLUETOOTH_SCAN) is not granted.")
+            } else if (hasNeverForLocationFlag) {
+                Pair(false,
+                    "BLUETOOTH_SCAN is declared with 'neverForLocation' flag in the merged manifest. " +
+                        "OS may filter iBeacon/Eddystone advertisements from scan results, causing zero " +
+                        "BLE data even though the scan starts successfully. Remove 'neverForLocation' " +
+                        "from your app Manifest to proceed."
+                )
             } else if (!hasLocationPermission) {
                 Pair(false, "Location permission(ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION) is required.")
             } else {
@@ -170,6 +183,19 @@ internal class TJLabsBluetoothManager(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startScan() : Pair<Boolean, String> {
+        // neverForLocation flag 가 있으면 OS 가 iBeacon/Eddystone 광고를 필터링해 scan 결과가 조용히 0건이
+        // 될 수 있다. 스캔 API 호출 성공 후에는 SDK 가 이 필터링을 감지할 방법이 없으므로 시작 시점에 warning
+        // 을 남겨 필드에서 "start success but no data" 증상 원인 특정을 돕는다. permission 이 모두 승인된
+        // CASE 에서는 이 로그가 유일한 단서다.
+        if (PermissionDiagnostic.hasBluetoothScanNeverForLocation(context)) {
+            TJLabsCommonLog.w(
+                "TJLabsBluetoothManager",
+                "startScan: BLUETOOTH_SCAN declared with 'neverForLocation' flag in merged manifest. " +
+                    "OS may filter iBeacon/Eddystone advertisements from scan results, resulting in " +
+                    "zero data even though scan starts successfully. If no BLE data arrives, " +
+                    "remove 'neverForLocation' from the app manifest."
+            )
+        }
         return try {
             bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallbackClass)
             Pair(true, "Success Start Scan")

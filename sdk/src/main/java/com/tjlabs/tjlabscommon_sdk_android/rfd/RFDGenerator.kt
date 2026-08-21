@@ -151,6 +151,15 @@ class RFDGenerator(private val application: Application, val userId : String = "
         return isCheckBleAvailable && isCheckBlePermission && isCheckBleActivation
     }
 
+    /**
+     * BLE 스캔 준비 상태 종합 진단. startService 호출 전 pre-check 또는 실패 후 원인 분석에 사용.
+     * `neverForLocation` flag + Location 미승인 mismatch 등 특수 케이스를 사람이 이해할 수 있는
+     * remediation 문구로 표면화한다. 자세한 내용은 [PermissionDiagnostic.diagnoseBleScanReadiness] 참고.
+     */
+    fun diagnoseBleScanReadiness(): BleScanReadinessReport {
+        return PermissionDiagnostic.diagnoseBleScanReadiness(application)
+    }
+
     fun setIsBackground(flag: Boolean) {
         isBackGround = flag
     }
