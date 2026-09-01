@@ -2,6 +2,7 @@ package com.tjlabs.tjlabscommon_sample.auth
 
 import android.app.Application
 import android.util.Log
+import com.tjlabs.tjlabsauth_sdk_android.AuthServerEnv
 import com.tjlabs.tjlabsauth_sdk_android.TJLabsAuthManager
 import com.tjlabs.tjlabsauth_sdk_android.TokenResult
 
@@ -26,19 +27,20 @@ object AuthService {
         val serverProvider = "gcp"
         val serverRegion = "KOREA"
         val serverService = "jupiter"
+        val serverEnv = AuthServerEnv.DEV_TESTING_ONLY
 
         Log.d(TAG, "signIn() inputs:")
         Log.d(TAG, "  clientSecret    = ${mask(clientSecret)} (len=${clientSecret.length})")
         Log.d(TAG, "  accessKey       = ${mask(accessKey)} (len=${accessKey.length})")
         Log.d(TAG, "  secretAccessKey = ${mask(secretAccessKey)} (len=${secretAccessKey.length})")
-        Log.d(TAG, "  server          = provider=$serverProvider region=$serverRegion service=$serverService")
+        Log.d(TAG, "  server          = provider=$serverProvider region=$serverRegion service=$serverService env=$serverEnv")
 
         if (clientSecret.isBlank() || accessKey.isBlank() || secretAccessKey.isBlank()) {
             Log.w(TAG, "signIn() aborted: one or more inputs are blank")
         }
 
         TJLabsAuthManager.setClientSecret(application, clientSecret)
-        TJLabsAuthManager.setServerURL(serverProvider, serverRegion, serverService)
+        TJLabsAuthManager.setServerURL(serverProvider, serverRegion, serverService, serverEnv)
 
         Log.d(TAG, "signIn() requesting auth...")
         val startedAt = System.currentTimeMillis()
