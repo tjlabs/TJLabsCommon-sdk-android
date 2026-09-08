@@ -3,6 +3,7 @@ package com.tjlabs.tjlabscommon_sample.wards
 import android.app.Application
 import android.util.Log
 import com.tjlabs.tjlabsresource_sdk_android.ResourceRegion
+import com.tjlabs.tjlabsresource_sdk_android.ResourceServerEnv
 import com.tjlabs.tjlabsresource_sdk_android.ServerProvider
 import com.tjlabs.tjlabsresource_sdk_android.TJLabsResourceManager
 
@@ -23,13 +24,24 @@ object BundleService {
         sectorId: Int,
         provider: String = ServerProvider.GCP.value,
         region: String = ResourceRegion.KOREA.value,
+        serverEnv: ResourceServerEnv = ResourceServerEnv.DEV_TESTING_ONLY,
+        forceFresh: Boolean = false,
         onDone: (Result<BundleWardMap>) -> Unit,
     ) {
         val manager = TJLabsResourceManager()
-        Log.d(TAG, "loadResource sector=$sectorId provider=$provider region=$region")
-        manager.loadResource(application, provider, region, sectorId) { success ->
+        manager.setDebugOption(true)
+
+        if (forceFresh) manager.clearCache(application, sectorId)
+
+        Log.d(TAG, "loadResource sector=$sectorId provider=$provider region=$region env=$serverEnv forceFresh=$forceFresh")
+        manager.loadResource(application, provider, region, sectorId, serverEnv) { success, info ->
+            val mode = when (info?.fromCache) {
+                true -> "CACHE"
+                false -> "FRESH"
+                null -> "UNKNOWN"
+            }
             if (!success) {
-                onDone(Result.failure(IllegalStateException("loadResource failed")))
+                onDone(Result.failure(IllegalStateException("loadResource failed mode=$mode info=$info")))
                 return@loadResource
             }
             val raw = manager.getLevelWardsData()
@@ -40,7 +52,7 @@ object BundleService {
                     map.putIfAbsent(name, label)
                 }
             }
-            Log.d(TAG, "loadResource done levels=${raw.size} wards=${map.size}")
+            Log.d(TAG, "loadResource done mode=$mode levels=${raw.size} wards=${map.size} info=$info")
             onDone(Result.success(BundleWardMap(sectorId, map)))
         }
     }
