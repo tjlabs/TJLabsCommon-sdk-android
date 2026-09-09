@@ -6,7 +6,7 @@ plugins {
 
 val versionMajor = 1
 val versionMinor = 0
-val versionPatch = 30
+val versionPatch = 31
 
 android {
     namespace = "com.tjlabs.tjlabscommon_sdk_android"

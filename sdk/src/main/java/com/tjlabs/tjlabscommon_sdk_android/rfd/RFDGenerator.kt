@@ -210,7 +210,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
                 val averageBleMap =  TJLabsBluetoothFunctions.averageBleScanInfoSet(currentBleScanInfoSet)
                 val rfdResult = ReceivedForce(
                     userId,
-                    System.currentTimeMillis(),
+                    System.currentTimeMillis() - (bleScanWindowTimeMillis / 2),
                     averageBleMap,
                     getPressure()
                 )
@@ -277,7 +277,7 @@ class RFDGenerator(private val application: Application, val userId : String = "
 
                         val rfdResult = ReceivedForce(
                             userId,
-                            System.currentTimeMillis(),
+                            System.currentTimeMillis() - (bleScanWindowTimeMillis / 2),
                             averageBleMap,
                             getPressure()
                         )
