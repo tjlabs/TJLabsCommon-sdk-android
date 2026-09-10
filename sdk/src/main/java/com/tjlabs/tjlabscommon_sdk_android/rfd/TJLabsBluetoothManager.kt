@@ -56,9 +56,10 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     companion object{
         const val TJLABS_WARD_UUID = "0000feaa-0000-1000-8000-00805f9b34fb"
         const val DEFAULT_SEI_BEACON_NAME_PREFIX = "NI-011-0000"
-        // Pattern matches names like TJ-00CB, TJ-0ACB, TJ-FFCB — the two chars between "TJ-"
-        // and "CB" are hex (0-9, A-F, case-insensitive), not decimal digits.
-        const val DEFAULT_IBEACON_NAME_KEYWORD = "TJ-[0-9A-Fa-f]{2}CB"
+        // Ward HW(iBeacon/Eddystone 두 프레임 모두) 는 TJ-XXCB 형태의 이름으로 브로드캐스트하므로
+        // 정규식 하나를 두 프레임 매칭에 공용으로 사용한다. 예: TJ-10CB, TJ-10CB-00010164-0000.
+        // 두 자리는 hex (0-9, A-F, case-insensitive).
+        const val DEFAULT_WARD_NAME_KEYWORD = "TJ-[0-9A-Fa-f]{2}CB"
 
         private fun compileBeaconRegex(pattern: String): Regex =
             runCatching { Regex(pattern) }
@@ -67,8 +68,8 @@ internal class TJLabsBluetoothManager(private val context: Context) {
     private var scanMode: ScanMode = ScanMode.WARD_ALL_SCAN
     private var wardServiceParcelUuid: ParcelUuid? = parseParcelUuidOrNull(TJLABS_WARD_UUID)
     private var seiBeaconNamePrefix: String = DEFAULT_SEI_BEACON_NAME_PREFIX
-    private var iBeaconNameKeyword: String = DEFAULT_IBEACON_NAME_KEYWORD
-    private var iBeaconNameRegex: Regex = compileBeaconRegex(DEFAULT_IBEACON_NAME_KEYWORD)
+    private var wardNameKeyword: String = DEFAULT_WARD_NAME_KEYWORD
+    private var wardNameRegex: Regex = compileBeaconRegex(DEFAULT_WARD_NAME_KEYWORD)
     /**
      * 퍼미션 검사
      */
@@ -164,9 +165,9 @@ internal class TJLabsBluetoothManager(private val context: Context) {
         setSeiScanSpec(seiBeaconNamePrefix)
     }
 
-    fun setIBeaconScanSpec(nameKeyword: String = DEFAULT_IBEACON_NAME_KEYWORD) {
-        iBeaconNameKeyword = nameKeyword
-        iBeaconNameRegex = compileBeaconRegex(nameKeyword)
+    fun setWardNameSpec(nameKeyword: String = DEFAULT_WARD_NAME_KEYWORD) {
+        wardNameKeyword = nameKeyword
+        wardNameRegex = compileBeaconRegex(nameKeyword)
     }
 
     fun setMinRssiThreshold(threshold : Int = -100) {
@@ -286,7 +287,7 @@ internal class TJLabsBluetoothManager(private val context: Context) {
             }
             ScanMode.ONLY_IBEACON_SCAN -> isIBeaconMatched(scanRecord)
             ScanMode.WARD_ALL_SCAN -> {
-                hasServiceUuid(scanRecord, wardServiceParcelUuid) || isIBeaconMatched(scanRecord)
+                isEddystoneWardMatched(scanRecord) || isIBeaconMatched(scanRecord)
             }
         }
     }
@@ -295,10 +296,18 @@ internal class TJLabsBluetoothManager(private val context: Context) {
         return scanRecord.deviceName?.startsWith(seiBeaconNamePrefix) == true
     }
 
+    // Eddystone UUID(0xFEAA) 는 Google SIG 공용값이라 서드파티 비콘도 통과할 수 있으므로,
+    // Ward HW 네이밍 규칙(TJ-XXCB…) 을 콜백 단에서 재검증한다. iBeacon 쪽과 대칭 구조.
+    private fun isEddystoneWardMatched(scanRecord: android.bluetooth.le.ScanRecord): Boolean {
+        if (!hasServiceUuid(scanRecord, wardServiceParcelUuid)) return false
+        val name = scanRecord.deviceName ?: return false
+        return wardNameRegex.containsMatchIn(name)
+    }
+
     private fun isIBeaconMatched(scanRecord: android.bluetooth.le.ScanRecord): Boolean {
         val isIBeaconFrame = hasIBeaconManufacturerData(scanRecord)
         val name = scanRecord.deviceName ?: return false
-        val isNameMatched = iBeaconNameRegex.containsMatchIn(name)
+        val isNameMatched = wardNameRegex.containsMatchIn(name)
         return isIBeaconFrame && isNameMatched
     }
 
