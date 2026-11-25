@@ -10,6 +10,7 @@ import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.loadU
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.saveUvdResultAsJson
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.sensorMutableList
 import com.tjlabs.tjlabscommon_sdk_android.simulation.JupiterDataFunctions.sensorSimulationIndex
+import com.tjlabs.tjlabscommon_sdk_android.simulation.SensorLogWriter
 import com.tjlabs.tjlabscommon_sdk_android.utils.TJLabsCommonLog
 import com.tjlabs.tjlabscommon_sdk_android.uvd.dr.TJLabsDRDistanceEstimator
 import com.tjlabs.tjlabscommon_sdk_android.uvd.pdr.TJLabsPDRDistanceEstimator
@@ -70,6 +71,8 @@ class UVDGenerator(private val application: Application, private val userId : St
 
     private var isBackGround = false
     private var isSaveUvdData = false
+    /** isSaveData 일 때만 연다 — UVD 를 만든 40 Hz 센서값 (`_sensor.jsonl`) */
+    private var sensorLogWriter: SensorLogWriter? = null
     private val simulationHandler = Handler(Looper.getMainLooper())
     private var simulationRunnable: Runnable? = null
 
@@ -179,10 +182,15 @@ class UVDGenerator(private val application: Application, private val userId : St
         tjLabsPdrDistanceEstimator.setMinStepLength(minPDRStepLength)
         tjLabsPdrDistanceEstimator.setMaxStepLength(maxPDRStepLength)
 
+        sensorLogWriter?.close()
+        sensorLogWriter = if (isSaveData) SensorLogWriter.open(application, userId, JupiterDataFunctions.getServiceStartTime()) else null
+
         tjLabsSensorManager.getSensorDataResultOrNull(object : TJLabsSensorManager.SensorResultListener{
             override fun onSensorChangedResult(sensorData: SensorData) {
                 val curTime = System.currentTimeMillis()
                 val dtime = if (preTime != 0L) {curTime - preTime} else {null}
+                // uvd.json 과 같은 조건 (저장 설정 · 포그라운드) — 같은 틱의 시각으로 맞춘다
+                if (!isBackGround) sensorLogWriter?.append(curTime, sensorData)
                 when (generatorUserMode) {
                     UserMode.MODE_PEDESTRIAN -> generatePedestrianUvd(curTime, dtime,sensorData, callback)
                     UserMode.MODE_VEHICLE -> generateVehicleUvd(curTime, dtime,sensorData, callback)
@@ -499,6 +507,8 @@ class UVDGenerator(private val application: Application, private val userId : St
 
     fun stopUvdGeneration() {
         tjLabsSensorManager.stopSensorChanged()
+        sensorLogWriter?.close()
+        sensorLogWriter = null
         simulationRunnable?.let { simulationHandler.removeCallbacks(it) }
         simulationRunnable = null
         tjLabsPdrDistanceEstimator = TJLabsPDRDistanceEstimator()
