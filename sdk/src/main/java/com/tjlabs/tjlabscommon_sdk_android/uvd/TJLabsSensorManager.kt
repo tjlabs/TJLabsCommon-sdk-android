@@ -50,9 +50,9 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
         pressure = pressureEventCount.getAndSet(0)
     )
 
-    init {
-        initSensorManager()
-    }
+    // 2026-11-25: 생성자에서 센서를 등록하지 않는다 — 리플레이 · 시뮬레이션처럼 수집을 시작하지 않는 인스턴스는 stopSensorChanged 가
+    //   (isRunning=false 라) 해제하지 않아 인스턴스마다 리스너가 남았다 (UVDGenerator 1 개 = 1 리스너, 프로세스 한도 128 → 크래시).
+    //   등록은 getSensorDataResultOrNull (수집 시작) 에서만.
 
     private fun initSensorManager() {
         sensorManager.registerListener(this,
@@ -139,6 +139,9 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
     }
 
     fun getSensorDataResultOrNull(callback: SensorResultListener) {
+        // 이미 수집 중이면 이전 타이머를 멈춘다 (다시 시작해도 타이머가 겹치지 않게). 같은 리스너 · 센서 재등록은 무시된다.
+        sensorTimer?.cancel()
+        sensorTimer = null
         isRunning = true
         initSensorManager()
 
@@ -163,9 +166,10 @@ internal class TJLabsSensorManager(private val context : Context, private val fr
     }
 
     fun stopSensorChanged() : Pair<Boolean, String> {
+        // 2026-11-25: 시작 여부와 상관없이 항상 해제 (예전 버전이 생성자에서 등록한 리스너도 남지 않게).
+        sensorManager.unregisterListener(this)
         if (!isRunning)  return Pair(false, "SensorManager is not started.")
 
-        sensorManager.unregisterListener(this)
         sensorData = SensorData()
         // 실행 중이 아니면 무시
         isRunning = false
